@@ -2,79 +2,54 @@ import { supabase } from "./supabase.js";
 
 console.log("EduFlow Supabase connected:", supabase);
 
+/* =========================================
+   ELEMENTS
+========================================= */
 
-/* ========================= */
-/* ELEMENTS */
-/* ========================= */
+const authScreen = document.getElementById("auth-screen");
+const dashboard = document.getElementById("dashboard");
 
-const authScreen =
-    document.getElementById("auth-screen");
+const loginForm = document.getElementById("login");
+const signupForm = document.getElementById("signup");
 
-const dashboard =
-    document.getElementById("dashboard");
+const loginContainer = document.getElementById("login-form");
+const signupContainer = document.getElementById("signup-form");
 
-const loginForm =
-    document.getElementById("login");
+const showSignup = document.getElementById("show-signup");
+const showLogin = document.getElementById("show-login");
 
-const signupForm =
-    document.getElementById("signup");
+const loginMessage = document.getElementById("login-message");
+const signupMessage = document.getElementById("signup-message");
 
-const loginContainer =
-    document.getElementById("login-form");
-
-const signupContainer =
-    document.getElementById("signup-form");
-
-const showSignup =
-    document.getElementById("show-signup");
-
-const showLogin =
-    document.getElementById("show-login");
-
-const loginMessage =
-    document.getElementById("login-message");
-
-const signupMessage =
-    document.getElementById("signup-message");
-
-const logoutButton =
-    document.getElementById("logout-btn");
+const logoutButton = document.getElementById("logout-btn");
 
 
-/* ========================= */
-/* AUTH SWITCHING */
-/* ========================= */
+/* =========================================
+   AUTH SWITCHING
+========================================= */
 
 showSignup.addEventListener("click", () => {
-
     loginContainer.classList.add("hidden");
-
     signupContainer.classList.remove("hidden");
-
     loginMessage.textContent = "";
 });
 
-
 showLogin.addEventListener("click", () => {
-
     signupContainer.classList.add("hidden");
-
     loginContainer.classList.remove("hidden");
-
     signupMessage.textContent = "";
 });
 
 
-/* ========================= */
-/* SIGN UP */
-/* ========================= */
+/* =========================================
+   SIGN UP
+========================================= */
 
 signupForm.addEventListener("submit", async (event) => {
 
     event.preventDefault();
 
-    signupMessage.textContent =
-        "Creating your account...";
+    signupMessage.textContent = "Creating your account...";
 
     const name =
         document.getElementById("signup-name").value.trim();
@@ -85,33 +60,20 @@ signupForm.addEventListener("submit", async (event) => {
     const password =
         document.getElementById("signup-password").value;
 
-
-    const { data, error } =
-        await supabase.auth.signUp({
-
-            email,
-
-            password,
-
-            options: {
-
-                data: {
-                    full_name: name
-                }
-
+    const { error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+            data: {
+                full_name: name
             }
-
-        });
-
+        }
+    });
 
     if (error) {
-
-        signupMessage.textContent =
-            error.message;
-
+        signupMessage.textContent = error.message;
         return;
     }
-
 
     signupMessage.textContent =
         "Account created successfully. Check your email if confirmation is required.";
@@ -120,17 +82,15 @@ signupForm.addEventListener("submit", async (event) => {
 });
 
 
-/* ========================= */
-/* LOGIN */
-/* ========================= */
+/* =========================================
+   LOGIN
+========================================= */
 
 loginForm.addEventListener("submit", async (event) => {
 
     event.preventDefault();
 
-    loginMessage.textContent =
-        "Signing in...";
-
+    loginMessage.textContent = "Signing in...";
 
     const email =
         document.getElementById("login-email").value.trim();
@@ -138,47 +98,39 @@ loginForm.addEventListener("submit", async (event) => {
     const password =
         document.getElementById("login-password").value;
 
-
     const { data, error } =
         await supabase.auth.signInWithPassword({
-
             email,
-
             password
-
         });
 
-
     if (error) {
-
-        loginMessage.textContent =
-            error.message;
-
+        loginMessage.textContent = error.message;
         return;
     }
 
-
     loginMessage.textContent = "";
 
-    await loadDashboard(data.user);
+    await routeUser(data.user);
 });
 
 
-/* ========================= */
-/* LOGOUT */
-/* ========================= */
+/* =========================================
+   LOGOUT
+========================================= */
 
 logoutButton.addEventListener("click", async () => {
 
     await supabase.auth.signOut();
 
     showAuth();
+
 });
 
 
-/* ========================= */
-/* SHOW AUTH */
-/* ========================= */
+/* =========================================
+   SHOW AUTH
+========================================= */
 
 function showAuth() {
 
@@ -189,9 +141,9 @@ function showAuth() {
 }
 
 
-/* ========================= */
-/* SHOW DASHBOARD */
-/* ========================= */
+/* =========================================
+   SHOW DASHBOARD
+========================================= */
 
 function showDashboard() {
 
@@ -202,207 +154,985 @@ function showDashboard() {
 }
 
 
-/* ========================= */
-/* LOAD PROFILE */
-/* ========================= */
+/* =========================================
+   GET USER PROFILE
+========================================= */
 
-async function loadProfile(user) {
+async function getProfile(userId) {
 
-    const { data: profile, error } =
+    const { data, error } =
         await supabase
             .from("profiles")
             .select("*")
-            .eq("id", user.id)
+            .eq("id", userId)
             .maybeSingle();
-
 
     if (error) {
 
         console.error(
-            "Profile error:",
+            "Profile loading error:",
             error
         );
 
         return null;
     }
 
-
-    return profile;
+    return data;
 }
 
 
-/* ========================= */
-/* LOAD DASHBOARD */
-/* ========================= */
+/* =========================================
+   ROUTE USER BY ROLE
+========================================= */
 
-async function loadDashboard(user) {
+async function routeUser(user) {
+
+    const profile =
+        await getProfile(user.id);
+
+    if (!profile) {
+
+        console.error(
+            "No profile found for user."
+        );
+
+        alert(
+            "Your account profile could not be found."
+        );
+
+        await supabase.auth.signOut();
+
+        showAuth();
+
+        return;
+    }
+
+
+    console.log(
+        "EduFlow user role:",
+        profile.role
+    );
+
+
+    switch (profile.role) {
+
+        case "super_admin":
+
+            await loadSuperAdmin(
+                user,
+                profile
+            );
+
+            break;
+
+
+        case "admin":
+
+            await loadAdmin(
+                user,
+                profile
+            );
+
+            break;
+
+
+        case "teacher":
+
+            await loadTeacher(
+                user,
+                profile
+            );
+
+            break;
+
+
+        case "student":
+
+            await loadStudent(
+                user,
+                profile
+            );
+
+            break;
+
+
+        case "parent":
+
+            await loadParent(
+                user,
+                profile
+            );
+
+            break;
+
+
+        default:
+
+            console.error(
+                "Unknown role:",
+                profile.role
+            );
+
+            alert(
+                "Your account has an invalid role."
+            );
+
+            await supabase.auth.signOut();
+
+            showAuth();
+    }
+}
+
+
+/* =========================================
+   SUPER ADMIN
+========================================= */
+
+async function loadSuperAdmin(
+    user,
+    profile
+) {
 
     showDashboard();
 
+    buildSuperAdminPanel(
+        user,
+        profile
+    );
 
-    const profile =
-        await loadProfile(user);
+    await loadSuperAdminStats();
+
+}
 
 
-    const name =
-        profile?.full_name ||
-        user.user_metadata?.full_name ||
-        "Student";
+/* =========================================
+   SUPER ADMIN UI
+========================================= */
+
+function buildSuperAdminPanel(
+    user,
+    profile
+) {
+
+    const firstName =
+        profile.full_name
+            ?.split(" ")[0] ||
+        "Admin";
 
 
     document.getElementById(
         "user-name"
-    ).textContent = name;
+    ).textContent =
+        profile.full_name || "Super Admin";
 
 
     document.getElementById(
         "user-email"
-    ).textContent = user.email;
+    ).textContent =
+        user.email;
 
 
     document.getElementById(
         "avatar"
     ).textContent =
-        name.charAt(0).toUpperCase();
+        firstName
+            .charAt(0)
+            .toUpperCase();
 
 
     document.getElementById(
         "welcome-title"
     ).textContent =
-        `Good evening, ${name.split(" ")[0]} 👋`;
+        `Good evening, ${firstName} 👋`;
 
 
-    await loadStats(user.id);
-}
+    const main =
+        document.querySelector(".main");
 
 
-/* ========================= */
-/* LOAD STATS */
-/* ========================= */
+    main.innerHTML = `
 
-async function loadStats(userId) {
+        <header class="topbar">
 
+            <div>
 
-    /* ACTIVE COURSES */
+                <h1>
+                    Super Admin Dashboard
+                </h1>
 
-    const { count: activeCourses } =
-        await supabase
-            .from("course_enrollments")
-            .select("*", {
-                count: "exact",
-                head: true
-            })
-            .eq("student_id", userId);
+                <p>
+                    Complete control over EduFlow.
+                </p>
 
+            </div>
 
-    document.getElementById(
-        "active-courses"
-    ).textContent =
-        activeCourses || 0;
+            <div class="profile">
 
+                <div class="profile-info">
 
-    /* COMPLETED LESSONS */
+                    <strong>
+                        ${escapeHTML(
+                            profile.full_name ||
+                            "Super Admin"
+                        )}
+                    </strong>
 
-    const { count: completed } =
-        await supabase
-            .from("lesson_progress")
-            .select("*", {
-                count: "exact",
-                head: true
-            })
-            .eq("student_id", userId)
-            .eq("completed", true);
+                    <small>
+                        Super Administrator
+                    </small>
 
+                </div>
 
-    document.getElementById(
-        "completed-courses"
-    ).textContent =
-        completed || 0;
+                <div class="avatar">
+                    ${escapeHTML(
+                        firstName
+                            .charAt(0)
+                            .toUpperCase()
+                    )}
+                </div>
 
+            </div>
 
-    /* ASSIGNMENTS */
-
-    const { data: enrollments } =
-        await supabase
-            .from("course_enrollments")
-            .select("course_id")
-            .eq("student_id", userId);
+        </header>
 
 
-    if (enrollments?.length) {
+        <section class="admin-actions">
 
-        const courseIds =
-            enrollments.map(
-                item => item.course_id
-            );
-
-
-        const { count: assignments } =
-            await supabase
-                .from("assignments")
-                .select("*", {
-                    count: "exact",
-                    head: true
-                })
-                .in("course_id", courseIds);
+            <button
+                class="admin-action primary-action"
+                id="create-school-btn"
+            >
+                <span>＋</span>
+                <div>
+                    <strong>Create School</strong>
+                    <small>Add a new school to EduFlow</small>
+                </div>
+            </button>
 
 
-        document.getElementById(
-            "assignments-count"
-        ).textContent =
-            assignments || 0;
-
-    } else {
-
-        document.getElementById(
-            "assignments-count"
-        ).textContent = "0";
-
-    }
+            <button
+                class="admin-action"
+                id="manage-users-btn"
+            >
+                <span>👥</span>
+                <div>
+                    <strong>Manage Users</strong>
+                    <small>View all platform users</small>
+                </div>
+            </button>
 
 
-    /* GRADES */
+            <button
+                class="admin-action"
+                id="manage-schools-btn"
+            >
+                <span>🏫</span>
+                <div>
+                    <strong>Manage Schools</strong>
+                    <small>View and manage schools</small>
+                </div>
+            </button>
 
-    const { data: grades } =
-        await supabase
-            .from("grades")
-            .select("score")
-            .eq("student_id", userId);
-
-
-    if (grades?.length) {
-
-        const scores =
-            grades
-                .map(g => Number(g.score))
-                .filter(
-                    score => !Number.isNaN(score)
-                );
+        </section>
 
 
-        if (scores.length) {
+        <section class="cards">
 
-            const average =
-                scores.reduce(
-                    (a, b) => a + b,
+            <div class="card">
+                <div class="stat-label">
+                    Schools
+                </div>
+
+                <div
+                    id="total-schools"
+                    class="stat-value"
+                >
                     0
-                ) / scores.length;
+                </div>
+            </div>
 
 
-            document.getElementById(
-                "average-grade"
-            ).textContent =
-                `${Math.round(average)}%`;
+            <div class="card">
+                <div class="stat-label">
+                    Users
+                </div>
 
-        }
+                <div
+                    id="total-users"
+                    class="stat-value"
+                >
+                    0
+                </div>
+            </div>
+
+
+            <div class="card">
+                <div class="stat-label">
+                    Teachers
+                </div>
+
+                <div
+                    id="total-teachers"
+                    class="stat-value"
+                >
+                    0
+                </div>
+            </div>
+
+
+            <div class="card">
+                <div class="stat-label">
+                    Students
+                </div>
+
+                <div
+                    id="total-students"
+                    class="stat-value"
+                >
+                    0
+                </div>
+            </div>
+
+        </section>
+
+
+        <section class="admin-section">
+
+            <div class="section-header">
+
+                <div>
+                    <h2>
+                        EduFlow Overview
+                    </h2>
+
+                    <p>
+                        Platform-wide management.
+                    </p>
+                </div>
+
+            </div>
+
+
+            <div class="admin-grid">
+
+                <div class="admin-card">
+                    <div class="admin-card-icon">
+                        🏫
+                    </div>
+
+                    <h3>
+                        Schools
+                    </h3>
+
+                    <p>
+                        Create and manage schools
+                        on the EduFlow platform.
+                    </p>
+                </div>
+
+
+                <div class="admin-card">
+                    <div class="admin-card-icon">
+                        👥
+                    </div>
+
+                    <h3>
+                        Users
+                    </h3>
+
+                    <p>
+                        Manage administrators,
+                        teachers, students and parents.
+                    </p>
+                </div>
+
+
+                <div class="admin-card">
+                    <div class="admin-card-icon">
+                        📚
+                    </div>
+
+                    <h3>
+                        Subjects
+                    </h3>
+
+                    <p>
+                        Monitor subjects across
+                        all schools.
+                    </p>
+                </div>
+
+
+                <div class="admin-card">
+                    <div class="admin-card-icon">
+                        📊
+                    </div>
+
+                    <h3>
+                        Reports
+                    </h3>
+
+                    <p>
+                        Platform-wide education
+                        analytics and reports.
+                    </p>
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <div
+            id="modal-container"
+            class="modal-container hidden"
+        ></div>
+
+    `;
+
+
+    document
+        .getElementById("create-school-btn")
+        .addEventListener(
+            "click",
+            openCreateSchoolModal
+        );
+
+
+    document
+        .getElementById("manage-schools-btn")
+        .addEventListener(
+            "click",
+            () => {
+                alert(
+                    "School management is coming next."
+                );
+            }
+        );
+
+
+    document
+        .getElementById("manage-users-btn")
+        .addEventListener(
+            "click",
+            () => {
+                alert(
+                    "User management is coming next."
+                );
+            }
+        );
+}
+
+
+/* =========================================
+   SUPER ADMIN STATISTICS
+========================================= */
+
+async function loadSuperAdminStats() {
+
+    const { count: schools } =
+        await supabase
+            .from("schools")
+            .select("*", {
+                count: "exact",
+                head: true
+            });
+
+
+    const { count: users } =
+        await supabase
+            .from("profiles")
+            .select("*", {
+                count: "exact",
+                head: true
+            });
+
+
+    const { count: teachers } =
+        await supabase
+            .from("teachers")
+            .select("*", {
+                count: "exact",
+                head: true
+            });
+
+
+    const { count: students } =
+        await supabase
+            .from("students")
+            .select("*", {
+                count: "exact",
+                head: true
+            });
+
+
+    const schoolsElement =
+        document.getElementById(
+            "total-schools"
+        );
+
+    const usersElement =
+        document.getElementById(
+            "total-users"
+        );
+
+    const teachersElement =
+        document.getElementById(
+            "total-teachers"
+        );
+
+    const studentsElement =
+        document.getElementById(
+            "total-students"
+        );
+
+
+    if (schoolsElement)
+        schoolsElement.textContent =
+            schools || 0;
+
+
+    if (usersElement)
+        usersElement.textContent =
+            users || 0;
+
+
+    if (teachersElement)
+        teachersElement.textContent =
+            teachers || 0;
+
+
+    if (studentsElement)
+        studentsElement.textContent =
+            students || 0;
+}
+
+
+/* =========================================
+   CREATE SCHOOL MODAL
+========================================= */
+
+function openCreateSchoolModal() {
+
+    const modal =
+        document.getElementById(
+            "modal-container"
+        );
+
+
+    modal.classList.remove("hidden");
+
+
+    modal.innerHTML = `
+
+        <div class="modal-backdrop">
+
+            <div class="modal">
+
+                <div class="modal-header">
+
+                    <div>
+                        <h2>
+                            Create School
+                        </h2>
+
+                        <p>
+                            Add a new school to EduFlow.
+                        </p>
+                    </div>
+
+                    <button
+                        id="close-modal"
+                        class="modal-close"
+                    >
+                        ×
+                    </button>
+
+                </div>
+
+
+                <form id="create-school-form">
+
+                    <label>
+                        School name
+                    </label>
+
+                    <input
+                        id="school-name"
+                        type="text"
+                        placeholder="e.g. ABC Grammar School"
+                        required
+                    >
+
+
+                    <label>
+                        Address
+                    </label>
+
+                    <input
+                        id="school-address"
+                        type="text"
+                        placeholder="School address"
+                    >
+
+
+                    <label>
+                        Phone
+                    </label>
+
+                    <input
+                        id="school-phone"
+                        type="tel"
+                        placeholder="+92..."
+                    >
+
+
+                    <label>
+                        Email
+                    </label>
+
+                    <input
+                        id="school-email"
+                        type="email"
+                        placeholder="school@example.com"
+                    >
+
+
+                    <p
+                        id="school-message"
+                        class="message"
+                    ></p>
+
+
+                    <button
+                        type="submit"
+                        class="primary-btn"
+                    >
+                        Create School
+                    </button>
+
+                </form>
+
+            </div>
+
+        </div>
+
+    `;
+
+
+    document
+        .getElementById("close-modal")
+        .addEventListener(
+            "click",
+            closeModal
+        );
+
+
+    document
+        .getElementById("create-school-form")
+        .addEventListener(
+            "submit",
+            createSchool
+        );
+}
+
+
+/* =========================================
+   CREATE SCHOOL
+========================================= */
+
+async function createSchool(event) {
+
+    event.preventDefault();
+
+
+    const message =
+        document.getElementById(
+            "school-message"
+        );
+
+
+    message.textContent =
+        "Creating school...";
+
+
+    const name =
+        document
+            .getElementById("school-name")
+            .value
+            .trim();
+
+
+    const address =
+        document
+            .getElementById("school-address")
+            .value
+            .trim();
+
+
+    const phone =
+        document
+            .getElementById("school-phone")
+            .value
+            .trim();
+
+
+    const email =
+        document
+            .getElementById("school-email")
+            .value
+            .trim();
+
+
+    const { error } =
+        await supabase
+            .from("schools")
+            .insert({
+
+                name,
+                address,
+                phone,
+                email
+
+            });
+
+
+    if (error) {
+
+        console.error(
+            "Create school error:",
+            error
+        );
+
+
+        message.textContent =
+            error.message;
+
+
+        return;
+    }
+
+
+    message.textContent =
+        "School created successfully.";
+
+
+    await loadSuperAdminStats();
+
+
+    setTimeout(
+        closeModal,
+        1000
+    );
+}
+
+
+/* =========================================
+   CLOSE MODAL
+========================================= */
+
+function closeModal() {
+
+    const modal =
+        document.getElementById(
+            "modal-container"
+        );
+
+
+    if (modal) {
+
+        modal.classList.add(
+            "hidden"
+        );
+
+        modal.innerHTML = "";
 
     }
 }
 
 
-/* ========================= */
-/* CHECK CURRENT SESSION */
-/* ========================= */
+/* =========================================
+   OTHER PANELS
+========================================= */
+
+async function loadAdmin(
+    user,
+    profile
+) {
+
+    showDashboard();
+
+    document.querySelector(".main").innerHTML = `
+
+        <header class="topbar">
+
+            <div>
+                <h1>School Admin</h1>
+
+                <p>
+                    Manage your school.
+                </p>
+            </div>
+
+        </header>
+
+
+        <section class="welcome-panel">
+
+            <h2>
+                Admin Panel
+            </h2>
+
+            <p>
+                Teacher, student and parent
+                management will be added next.
+            </p>
+
+        </section>
+
+    `;
+}
+
+
+async function loadTeacher(
+    user,
+    profile
+) {
+
+    showDashboard();
+
+    document.querySelector(".main").innerHTML = `
+
+        <header class="topbar">
+
+            <div>
+                <h1>Teacher Dashboard</h1>
+
+                <p>
+                    Manage your classes and students.
+                </p>
+            </div>
+
+        </header>
+
+
+        <section class="welcome-panel">
+
+            <h2>
+                Teacher Panel
+            </h2>
+
+            <p>
+                Attendance, grades and student
+                management will be added next.
+            </p>
+
+        </section>
+
+    `;
+}
+
+
+async function loadStudent(
+    user,
+    profile
+) {
+
+    showDashboard();
+
+    document.querySelector(".main").innerHTML = `
+
+        <header class="topbar">
+
+            <div>
+                <h1>
+                    Student Dashboard
+                </h1>
+
+                <p>
+                    Welcome to EduFlow.
+                </p>
+            </div>
+
+        </header>
+
+
+        <section class="welcome-panel">
+
+            <h2>
+                Student Panel 🎓
+            </h2>
+
+            <p>
+                Your subjects, attendance,
+                assignments and grades will appear here.
+            </p>
+
+        </section>
+
+    `;
+}
+
+
+async function loadParent(
+    user,
+    profile
+) {
+
+    showDashboard();
+
+    document.querySelector(".main").innerHTML = `
+
+        <header class="topbar">
+
+            <div>
+                <h1>
+                    Parent Dashboard
+                </h1>
+
+                <p>
+                    Monitor your children's education.
+                </p>
+            </div>
+
+        </header>
+
+
+        <section class="welcome-panel">
+
+            <h2>
+                Parent Panel 👨‍👩‍👧
+            </h2>
+
+            <p>
+                Attendance, grades and academic
+                information will appear here.
+            </p>
+
+        </section>
+
+    `;
+}
+
+
+/* =========================================
+   HTML SECURITY
+========================================= */
+
+function escapeHTML(value) {
+
+    return String(value)
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+}
+
+
+/* =========================================
+   SESSION CHECK
+========================================= */
 
 async function checkSession() {
 
@@ -416,7 +1146,7 @@ async function checkSession() {
 
     if (session?.user) {
 
-        await loadDashboard(
+        await routeUser(
             session.user
         );
 
@@ -428,9 +1158,9 @@ async function checkSession() {
 }
 
 
-/* ========================= */
-/* AUTH STATE LISTENER */
-/* ========================= */
+/* =========================================
+   AUTH STATE
+========================================= */
 
 supabase.auth.onAuthStateChange(
     async (event, session) => {
@@ -440,7 +1170,7 @@ supabase.auth.onAuthStateChange(
             session?.user
         ) {
 
-            await loadDashboard(
+            await routeUser(
                 session.user
             );
 
@@ -459,8 +1189,8 @@ supabase.auth.onAuthStateChange(
 );
 
 
-/* ========================= */
-/* START EDUFLOW */
-/* ========================= */
+/* =========================================
+   START EDUFLOW
+========================================= */
 
 checkSession();
