@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="theme-color" content="#4f46e5">
+    <meta name="description" content="EduFlow - Your education, organized.">
     <title>EduFlow</title>
     <link rel="stylesheet" href="style.css">
 </head>
@@ -14,8 +15,7 @@
 
 <div class="app">
 
-    <!-- SIDEBAR -->
-    <aside class="sidebar">
+    <aside class="sidebar" id="sidebar">
 
         <div class="brand">
             <div class="brand-mark">E</div>
@@ -74,68 +74,96 @@
 
         <div class="sidebar-user">
             <div class="avatar small">AB</div>
+
             <div>
-                <strong>Abdul Basit</strong>
+                <strong id="sidebarUserName">Abdul Basit</strong>
                 <span>Student</span>
             </div>
-            <button id="logoutBtn" title="Log out">↪</button>
+
+            <button id="logoutBtn">↪</button>
         </div>
 
     </aside>
 
-    <!-- MAIN -->
     <main class="main">
 
-        <!-- TOPBAR -->
         <header class="topbar">
 
             <button class="mobile-menu" id="mobileMenu">☰</button>
 
             <div class="topbar-title">
-                <div class="breadcrumb">Student Portal / <span id="breadcrumb">Dashboard</span></div>
+                <div class="breadcrumb">
+                    Student Portal /
+                    <span id="breadcrumb">Dashboard</span>
+                </div>
             </div>
 
             <div class="topbar-actions">
 
                 <div class="search-box">
                     <span>⌕</span>
-                    <input id="globalSearch" type="text" placeholder="Search anything...">
-                    <kbd>⌘ K</kbd>
+
+                    <input
+                        id="globalSearch"
+                        type="search"
+                        placeholder="Search anything...">
+
+                    <kbd>Ctrl K</kbd>
                 </div>
 
-                <button class="icon-button notification-button" id="notificationBtn">
+                <button
+                    class="icon-button notification-button"
+                    id="notificationBtn">
                     ♧
                     <i></i>
                 </button>
 
-                <button class="profile-button" data-page="profile">
+                <button
+                    class="profile-button"
+                    data-page="profile">
+
                     <div class="avatar">AB</div>
+
                     <div class="profile-button-text">
-                        <strong>Abdul Basit</strong>
+                        <strong id="topUserName">Abdul Basit</strong>
                         <span>Student</span>
                     </div>
+
                     <span>⌄</span>
+
                 </button>
 
             </div>
+
         </header>
 
-        <!-- PAGE CONTENT -->
         <div id="pageContent"></div>
 
     </main>
 
 </div>
 
-<!-- MOBILE OVERLAY -->
-<div class="mobile-overlay" id="mobileOverlay"></div>
+<div
+    class="mobile-overlay"
+    id="mobileOverlay">
+</div>
 
-<!-- MODAL -->
-<div class="modal-overlay" id="modalOverlay">
-    <div class="modal" id="modal">
-        <button class="modal-close" id="modalClose">×</button>
+<div
+    class="modal-overlay"
+    id="modalOverlay">
+
+    <div class="modal">
+
+        <button
+            class="modal-close"
+            id="modalClose">
+            ×
+        </button>
+
         <div id="modalContent"></div>
+
     </div>
+
 </div>
 
 <script src="script.js"></script>

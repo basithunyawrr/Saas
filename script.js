@@ -1,13 +1,46 @@
 /* =========================================
-   EDUFLOW PHASE 1
-   Lightweight frontend application
+   EDUFLOW PHASE 2
 ========================================= */
 
-const appState = {
-    currentPage: localStorage.getItem("eduFlowPage") || "dashboard",
-    darkMode: localStorage.getItem("eduFlowDark") === "true",
-    notifications: true
+const defaultState = {
+    page: "dashboard",
+    dark: false,
+
+    user: {
+        firstName: "Abdul",
+        lastName: "Basit",
+        email: "student@eduflow.demo",
+        phone: "+92 300 0000000",
+        bio: "Student learning technology, business and data."
+    },
+
+    completedLessons: [],
+
+    submittedAssignments: [],
+
+    notifications: [
+        {
+            title: "Assignment due tomorrow",
+            text: "JavaScript Project needs your attention.",
+            read: false
+        },
+        {
+            title: "Great progress!",
+            text: "You completed 5 lessons this week.",
+            read: false
+        },
+        {
+            title: "New grade available",
+            text: "Your UI/UX Design grade is 95%.",
+            read: false
+        }
+    ]
 };
+
+const savedState =
+    JSON.parse(localStorage.getItem("eduflowState"));
+
+const state = savedState || defaultState;
 
 const courses = [
     {
@@ -15,66 +48,96 @@ const courses = [
         title: "Web Development",
         description: "HTML, CSS & JavaScript",
         instructor: "Sarah Johnson",
-        progress: 72,
-        lessons: 42,
-        completed: 30,
         icon: "💻",
-        color: ""
+        progress: 72,
+        lessons: [
+            "HTML Fundamentals",
+            "CSS Layouts",
+            "Responsive Design",
+            "JavaScript Basics",
+            "DOM Manipulation",
+            "JavaScript Project"
+        ]
     },
     {
         id: 2,
         title: "Data Analytics",
         description: "Excel, SQL & Visualization",
         instructor: "Michael Chen",
-        progress: 48,
-        lessons: 36,
-        completed: 17,
         icon: "📊",
-        color: "orange"
+        progress: 48,
+        lessons: [
+            "Data Fundamentals",
+            "Excel Basics",
+            "Advanced Excel",
+            "SQL Introduction",
+            "Data Cleaning",
+            "Visualization"
+        ]
     },
     {
         id: 3,
         title: "Artificial Intelligence",
         description: "AI Fundamentals",
         instructor: "Dr. Emily Davis",
-        progress: 31,
-        lessons: 40,
-        completed: 12,
         icon: "🧠",
-        color: "green"
+        progress: 31,
+        lessons: [
+            "Introduction to AI",
+            "Machine Learning",
+            "Neural Networks",
+            "Training Models",
+            "AI Applications",
+            "AI Research"
+        ]
     },
     {
         id: 4,
         title: "UI/UX Design",
         description: "Design Principles & Figma",
         instructor: "Alex Morgan",
-        progress: 64,
-        lessons: 30,
-        completed: 19,
         icon: "🎨",
-        color: "blue"
+        progress: 64,
+        lessons: [
+            "Design Principles",
+            "Color Theory",
+            "Typography",
+            "Wireframing",
+            "Figma Basics",
+            "Design Challenge"
+        ]
     },
     {
         id: 5,
         title: "Business Management",
         description: "Strategy & Leadership",
         instructor: "James Wilson",
-        progress: 25,
-        lessons: 28,
-        completed: 7,
         icon: "💼",
-        color: "pink"
+        progress: 25,
+        lessons: [
+            "Business Basics",
+            "Strategy",
+            "Leadership",
+            "Operations",
+            "Marketing",
+            "Case Study"
+        ]
     },
     {
         id: 6,
         title: "English Communication",
         description: "Writing & Communication",
         instructor: "Emma Williams",
-        progress: 85,
-        lessons: 24,
-        completed: 20,
         icon: "📚",
-        color: "dark"
+        progress: 85,
+        lessons: [
+            "Grammar",
+            "Professional Writing",
+            "Presentations",
+            "Communication",
+            "Reports",
+            "Final Assessment"
+        ]
     }
 ];
 
@@ -197,118 +260,120 @@ const pageNames = {
     settings: "Settings"
 };
 
-const pageContent = document.getElementById("pageContent");
-const breadcrumb = document.getElementById("breadcrumb");
-const modalOverlay = document.getElementById("modalOverlay");
-const modalContent = document.getElementById("modalContent");
-const toast = document.getElementById("toast");
+const pageContent =
+    document.getElementById("pageContent");
+
+const breadcrumb =
+    document.getElementById("breadcrumb");
+
+const modalOverlay =
+    document.getElementById("modalOverlay");
+
+const modalContent =
+    document.getElementById("modalContent");
+
+const toast =
+    document.getElementById("toast");
+
+let toastTimer;
 
 document.addEventListener("DOMContentLoaded", () => {
 
-    if (appState.darkMode) {
-        document.body.classList.add("dark");
-    }
+    applyTheme();
 
-    navigate(appState.currentPage);
+    updateUserUI();
+
+    navigate(state.page);
 
     setupNavigation();
+
     setupSearch();
+
     setupMobileMenu();
+
     setupModal();
 
     document
         .getElementById("notificationBtn")
-        .addEventListener("click", showNotifications);
+        .addEventListener(
+            "click",
+            showNotifications
+        );
 
     document
         .getElementById("logoutBtn")
-        .addEventListener("click", () => {
-            showToast("Demo logout clicked");
-        });
+        .addEventListener(
+            "click",
+            () => {
+                showToast(
+                    "Demo logout — real authentication comes in Phase 3."
+                );
+            }
+        );
 });
 
 
-/* =========================================
-   NAVIGATION
-========================================= */
+function saveState() {
+
+    localStorage.setItem(
+        "eduflowState",
+        JSON.stringify(state)
+    );
+}
+
 
 function setupNavigation() {
 
     document.addEventListener("click", event => {
 
-        const navButton = event.target.closest("[data-page]");
+        const button =
+            event.target.closest("[data-page]");
 
-        if (!navButton) return;
+        if (!button) return;
 
-        const page = navButton.dataset.page;
+        navigate(button.dataset.page);
 
-        if (page) {
-            navigate(page);
-            closeMobileMenu();
-        }
+        closeMobileMenu();
     });
 }
 
 
 function navigate(page) {
 
-    if (!pageContent) return;
-
     if (!pageNames[page]) {
         page = "dashboard";
     }
 
-    appState.currentPage = page;
+    state.page = page;
 
-    localStorage.setItem("eduFlowPage", page);
+    saveState();
 
-    breadcrumb.textContent = pageNames[page];
+    breadcrumb.textContent =
+        pageNames[page];
 
-    document.querySelectorAll(".nav-item").forEach(button => {
+    document
+        .querySelectorAll(".nav-item")
+        .forEach(item => {
 
-        button.classList.toggle(
-            "active",
-            button.dataset.page === page
-        );
-    });
+            item.classList.toggle(
+                "active",
+                item.dataset.page === page
+            );
 
-    switch (page) {
+        });
 
-        case "dashboard":
-            renderDashboard();
-            break;
+    const renderers = {
+        dashboard: renderDashboard,
+        courses: renderCourses,
+        assignments: renderAssignments,
+        grades: renderGrades,
+        calendar: renderCalendar,
+        messages: renderMessages,
+        profile: renderProfile,
+        settings: renderSettings
+    };
 
-        case "courses":
-            renderCourses();
-            break;
-
-        case "assignments":
-            renderAssignments();
-            break;
-
-        case "grades":
-            renderGrades();
-            break;
-
-        case "calendar":
-            renderCalendar();
-            break;
-
-        case "messages":
-            renderMessages();
-            break;
-
-        case "profile":
-            renderProfile();
-            break;
-
-        case "settings":
-            renderSettings();
-            break;
-
-        default:
-            renderDashboard();
-    }
+    renderers[page]();
 
     window.scrollTo({
         top: 0,
@@ -323,45 +388,186 @@ function navigate(page) {
 
 function renderDashboard() {
 
+    const completed =
+        state.completedLessons.length;
+
+    const average =
+        Math.round(
+            grades.reduce(
+                (sum, item) =>
+                    sum + item.grade,
+                0
+            ) / grades.length
+        );
+
     pageContent.innerHTML = `
 
         <div class="page-heading">
+
             <div class="page-heading-row">
+
                 <div>
-                    <h1>Good evening, Abdul 👋</h1>
-                    <p>Here's what's happening with your learning today.</p>
+                    <h1>
+                        Good evening,
+                        ${state.user.firstName} 👋
+                    </h1>
+
+                    <p>
+                        Here's what's happening
+                        with your learning today.
+                    </p>
                 </div>
 
-                <button class="primary-button"
+                <button
+                    class="primary-button"
                     onclick="navigate('courses')">
                     Explore Courses
                 </button>
+
             </div>
+
+        </div>
+
+        <div class="hero-card">
+
+            <div>
+
+                <h2>
+                    Keep your learning streak alive 🔥
+                </h2>
+
+                <p>
+                    You've completed
+                    ${completed}
+                    lesson${completed === 1 ? "" : "s"}
+                    in this session.
+                </p>
+
+            </div>
+
+            <button
+                class="primary-button"
+                onclick="continueLearning()">
+                Continue Learning →
+            </button>
+
         </div>
 
         <section class="stats">
 
-            ${statCard("▣", "Active Courses", "6", "Currently learning")}
-            ${statCard("✓", "Completed", "24", "Lessons completed")}
-            ${statCard("📝", "Assignments", "8", "4 need attention")}
-            ${statCard("★", "Average Grade", "87%", "↑ 4% this month")}
+            ${statCard(
+                "▣",
+                "Active Courses",
+                "6",
+                "Currently learning"
+            )}
+
+            ${statCard(
+                "✓",
+                "Completed",
+                "24",
+                "Lessons completed"
+            )}
+
+            ${statCard(
+                "📝",
+                "Assignments",
+                "8",
+                "4 need attention"
+            )}
+
+            ${statCard(
+                "★",
+                "Average Grade",
+                `${average}%`,
+                "↑ 4% this month"
+            )}
 
         </section>
+
+        <div class="quick-actions">
+
+            <button
+                class="quick-action"
+                onclick="navigate('courses')">
+
+                <div class="quick-action-icon">
+                    📚
+                </div>
+
+                <div>
+                    <strong>Browse Courses</strong>
+                    <span>Continue studying</span>
+                </div>
+
+            </button>
+
+            <button
+                class="quick-action"
+                onclick="navigate('assignments')">
+
+                <div class="quick-action-icon">
+                    ✓
+                </div>
+
+                <div>
+                    <strong>Assignments</strong>
+                    <span>View your tasks</span>
+                </div>
+
+            </button>
+
+            <button
+                class="quick-action"
+                onclick="navigate('grades')">
+
+                <div class="quick-action-icon">
+                    ★
+                </div>
+
+                <div>
+                    <strong>My Grades</strong>
+                    <span>Check performance</span>
+                </div>
+
+            </button>
+
+            <button
+                class="quick-action"
+                onclick="navigate('calendar')">
+
+                <div class="quick-action-icon">
+                    □
+                </div>
+
+                <div>
+                    <strong>Calendar</strong>
+                    <span>See upcoming events</span>
+                </div>
+
+            </button>
+
+        </div>
 
         <section class="dashboard-grid">
 
             <div class="card">
 
                 <div class="card-header">
+
                     <div>
                         <h2>Continue Learning</h2>
-                        <p>Pick up where you left off.</p>
+                        <p>
+                            Pick up where you left off.
+                        </p>
                     </div>
 
-                    <button class="text-button"
+                    <button
+                        class="text-button"
                         onclick="navigate('courses')">
                         View all
                     </button>
+
                 </div>
 
                 <div class="course-list">
@@ -375,19 +581,23 @@ function renderDashboard() {
 
             </div>
 
-
             <div class="card">
 
                 <div class="card-header">
+
                     <div>
                         <h2>Upcoming</h2>
-                        <p>Your next deadlines.</p>
+                        <p>
+                            Your next deadlines.
+                        </p>
                     </div>
 
-                    <button class="text-button"
+                    <button
+                        class="text-button"
                         onclick="navigate('assignments')">
                         View all
                     </button>
+
                 </div>
 
                 <div class="upcoming-list">
@@ -406,14 +616,29 @@ function renderDashboard() {
 }
 
 
-function statCard(icon, label, value, note) {
+function continueLearning() {
+
+    const course = courses[0];
+
+    openCourse(course.id);
+}
+
+
+function statCard(
+    icon,
+    label,
+    value,
+    note
+) {
 
     return `
         <div class="stat-card">
 
             <div class="stat-top">
 
-                <span class="stat-label">${label}</span>
+                <span class="stat-label">
+                    ${label}
+                </span>
 
                 <div class="stat-icon">
                     ${icon}
@@ -423,7 +648,7 @@ function statCard(icon, label, value, note) {
 
             <h2>${value}</h2>
 
-            <small class="${note.includes("↑") ? "stat-up" : ""}">
+            <small>
                 ${note}
             </small>
 
@@ -433,6 +658,9 @@ function statCard(icon, label, value, note) {
 
 
 function courseRow(course) {
+
+    const progress =
+        calculateProgress(course);
 
     return `
         <div class="course-row">
@@ -448,14 +676,16 @@ function courseRow(course) {
                 <p>${course.description}</p>
 
                 <div class="progress-line">
+
                     <div
                         class="progress-fill"
-                        style="width:${course.progress}%">
+                        style="width:${progress}%">
                     </div>
+
                 </div>
 
                 <span class="course-percent">
-                    ${course.progress}% complete
+                    ${progress}% complete
                 </span>
 
             </div>
@@ -471,9 +701,27 @@ function courseRow(course) {
 }
 
 
+function calculateProgress(course) {
+
+    const extra =
+        state.completedLessons.filter(
+            id => id.startsWith(`${course.id}-`)
+        ).length;
+
+    const base =
+        course.progress;
+
+    return Math.min(
+        100,
+        base + extra * 4
+    );
+}
+
+
 function upcomingItem(item) {
 
-    const parts = item.date.split(" ");
+    const parts =
+        item.date.split(" ");
 
     return `
         <div class="upcoming-item">
@@ -514,12 +762,16 @@ function renderCourses() {
 
                 <div>
                     <h1>My Courses</h1>
-                    <p>Manage and continue your learning journey.</p>
+
+                    <p>
+                        Manage and continue
+                        your learning journey.
+                    </p>
                 </div>
 
                 <button
                     class="primary-button"
-                    onclick="showToast('Course discovery coming soon')">
+                    onclick="showToast('Course discovery will connect to the backend in Phase 3.')">
                     + Find Courses
                 </button>
 
@@ -529,55 +781,74 @@ function renderCourses() {
 
         <div class="page-grid">
 
-            ${courses.map(course => `
+            ${courses.map(course => {
 
-                <div class="card course-card">
+                const progress =
+                    calculateProgress(course);
 
-                    <div class="course-cover ${course.color}">
+                return `
 
-                        <div class="course-cover-icon">
-                            ${course.icon}
-                        </div>
+                    <div
+                        class="card course-card">
 
-                        <small>
-                            ${course.lessons} lessons
-                        </small>
+                        <div
+                            class="course-cover">
 
-                    </div>
-
-                    <div class="course-card-body">
-
-                        <h3>${course.title}</h3>
-
-                        <p>${course.description}</p>
-
-                        <div class="progress-line">
                             <div
-                                class="progress-fill"
-                                style="width:${course.progress}%">
+                                class="course-cover-icon">
+                                ${course.icon}
                             </div>
+
+                            <small>
+                                ${course.lessons.length}
+                                lessons
+                            </small>
+
                         </div>
 
-                        <div class="course-card-footer">
+                        <div
+                            class="course-card-body">
 
-                            <span>
-                                ${course.completed}/${course.lessons}
-                                lessons
-                            </span>
+                            <h3>
+                                ${course.title}
+                            </h3>
 
-                            <button
-                                class="text-button"
-                                onclick="openCourse(${course.id})">
-                                Continue →
-                            </button>
+                            <p>
+                                ${course.description}
+                            </p>
+
+                            <div
+                                class="progress-line">
+
+                                <div
+                                    class="progress-fill"
+                                    style="width:${progress}%">
+                                </div>
+
+                            </div>
+
+                            <div
+                                class="course-card-footer">
+
+                                <span>
+                                    ${progress}% complete
+                                </span>
+
+                                <button
+                                    class="text-button"
+                                    onclick="openCourse(${course.id})">
+                                    Open →
+                                </button>
+
+                            </div>
 
                         </div>
 
                     </div>
 
-                </div>
+                `;
 
-            `).join("")}
+            }).join("")}
 
         </div>
     `;
@@ -586,55 +857,158 @@ function renderCourses() {
 
 function openCourse(id) {
 
-    const course = courses.find(item => item.id === id);
+    const course =
+        courses.find(
+            item => item.id === id
+        );
 
     if (!course) return;
 
-    openModal(`
-        <h2>${course.icon} ${course.title}</h2>
+    const progress =
+        calculateProgress(course);
+
+    modalContent.innerHTML = `
+
+        <h2>
+            ${course.icon}
+            ${course.title}
+        </h2>
 
         <p>
             ${course.description}
         </p>
 
-        <div style="margin-top:20px">
-
-            <strong>Instructor</strong>
-
-            <p>
-                ${course.instructor}
-            </p>
-
-        </div>
+        <p style="margin-top:7px">
+            Instructor:
+            <strong>${course.instructor}</strong>
+        </p>
 
         <div style="margin-top:20px">
 
-            <strong>Course Progress</strong>
+            <strong>
+                Course Progress — ${progress}%
+            </strong>
 
-            <div class="progress-line">
+            <div
+                class="progress-line">
+
                 <div
                     class="progress-fill"
-                    style="width:${course.progress}%">
+                    style="width:${progress}%">
                 </div>
-            </div>
 
-            <p>
-                ${course.progress}% complete —
-                ${course.completed} of ${course.lessons} lessons completed.
-            </p>
+            </div>
 
         </div>
 
-        <div style="margin-top:25px">
+        <div class="lesson-list">
+
+            ${course.lessons
+                .map(
+                    (lesson, index) =>
+                        lessonItem(
+                            course,
+                            lesson,
+                            index
+                        )
+                )
+                .join("")}
+
+        </div>
+
+    `;
+
+    modalOverlay.classList.add("show");
+}
+
+
+function lessonItem(
+    course,
+    lesson,
+    index
+) {
+
+    const id =
+        `${course.id}-${index}`;
+
+    const done =
+        state.completedLessons.includes(id);
+
+    return `
+
+        <div class="lesson-item">
+
+            <div class="lesson-number">
+                ${index + 1}
+            </div>
+
+            <div class="lesson-info">
+
+                <strong>
+                    ${lesson}
+                </strong>
+
+                <span>
+                    Lesson ${index + 1}
+                </span>
+
+            </div>
 
             <button
-                class="primary-button"
-                onclick="closeModal(); showToast('Lesson opened')">
-                Start Next Lesson
+                class="lesson-check ${done ? "done" : ""}"
+                onclick="toggleLesson(
+                    '${course.id}',
+                    '${index}'
+                )">
+
+                ${done ? "✓" : "○"}
+
             </button>
 
         </div>
-    `);
+    `;
+}
+
+
+function toggleLesson(
+    courseId,
+    lessonIndex
+) {
+
+    const id =
+        `${courseId}-${lessonIndex}`;
+
+    const index =
+        state.completedLessons.indexOf(id);
+
+    if (index >= 0) {
+
+        state.completedLessons.splice(
+            index,
+            1
+        );
+
+        showToast(
+            "Lesson marked incomplete"
+        );
+
+    } else {
+
+        state.completedLessons.push(id);
+
+        showToast(
+            "Lesson completed ✓"
+        );
+    }
+
+    saveState();
+
+    const course =
+        courses.find(
+            item => item.id == courseId
+        );
+
+    openCourse(course.id);
 }
 
 
@@ -648,64 +1022,91 @@ function renderAssignments() {
 
         <div class="page-heading">
 
-            <div class="page-heading-row">
+            <div>
+                <h1>Assignments</h1>
 
-                <div>
-                    <h1>Assignments</h1>
-                    <p>Stay on top of your coursework and deadlines.</p>
-                </div>
-
-                <button
-                    class="primary-button"
-                    onclick="showToast('Assignment creation is for teachers')">
-                    + New Assignment
-                </button>
-
+                <p>
+                    Stay on top of your coursework
+                    and deadlines.
+                </p>
             </div>
 
         </div>
 
         <div class="assignment-list">
 
-            ${assignments.map(item => `
+            ${assignments
+                .map(
+                    item =>
+                        assignmentCard(item)
+                )
+                .join("")}
 
-                <div class="assignment-card">
+        </div>
+    `;
+}
 
-                    <div class="assignment-icon">
-                        ${item.icon}
-                    </div>
 
-                    <div class="assignment-info">
+function assignmentCard(item) {
 
-                        <h3>${item.title}</h3>
+    const submitted =
+        state.submittedAssignments.includes(
+            item.id
+        );
 
-                        <p>${item.course}</p>
+    let status =
+        submitted
+            ? "completed"
+            : item.status;
 
-                    </div>
+    return `
 
-                    <div class="assignment-date">
+        <div class="assignment-card">
 
-                        <strong>${item.date}</strong>
+            <div class="assignment-icon">
+                ${item.icon}
+            </div>
 
-                        <span>${item.due}</span>
+            <div class="assignment-info">
 
-                    </div>
+                <h3>
+                    ${item.title}
+                </h3>
 
-                    <span class="status ${item.status}">
-                        ${capitalize(item.status)}
-                    </span>
+                <p>
+                    ${item.course}
+                </p>
 
-                    <button
-                        class="secondary-button"
-                        onclick="openAssignment(${item.id})">
-                        ${item.status === "completed"
-                            ? "Review"
-                            : "Open"}
-                    </button>
+            </div>
 
-                </div>
+            <div class="assignment-date">
 
-            `).join("")}
+                <strong>
+                    ${item.date}
+                </strong>
+
+                <span>
+                    ${submitted
+                        ? "Submitted"
+                        : item.due}
+                </span>
+
+            </div>
+
+            <span
+                class="status ${status}">
+                ${capitalize(status)}
+            </span>
+
+            <button
+                class="secondary-button"
+                onclick="openAssignment(${item.id})">
+
+                ${submitted
+                    ? "View"
+                    : "Open"}
+
+            </button>
 
         </div>
     `;
@@ -714,43 +1115,99 @@ function renderAssignments() {
 
 function openAssignment(id) {
 
-    const item = assignments.find(a => a.id === id);
+    const item =
+        assignments.find(
+            assignment =>
+                assignment.id === id
+        );
 
     if (!item) return;
 
-    openModal(`
-        <h2>${item.icon} ${item.title}</h2>
+    const submitted =
+        state.submittedAssignments.includes(
+            id
+        );
 
-        <p>
-            Course: <strong>${item.course}</strong>
+    modalContent.innerHTML = `
+
+        <h2>
+            ${item.icon}
+            ${item.title}
+        </h2>
+
+        <p style="margin-top:5px">
+            ${item.course}
         </p>
 
-        <p style="margin-top:10px">
-            Due date: <strong>${item.date}</strong>
-        </p>
+        <div class="submit-box">
 
-        <div style="margin-top:20px">
+            <strong>
+                Assignment submission
+            </strong>
 
-            <p>
-                This is a Phase 1 demo assignment.
-                The real submission system will be connected
-                when we build the backend.
+            <p style="margin-top:7px">
+                Upload your work below.
             </p>
 
+            <input
+                id="assignmentFile"
+                type="file">
+
+            <div style="margin-top:15px">
+
+                <button
+                    class="primary-button"
+                    onclick="submitAssignment(${id})">
+
+                    ${
+                        submitted
+                            ? "Resubmit Assignment"
+                            : "Submit Assignment"
+                    }
+
+                </button>
+
+            </div>
+
         </div>
+    `;
 
-        <div style="margin-top:25px">
+    modalOverlay.classList.add("show");
+}
 
-            <button
-                class="primary-button"
-                onclick="closeModal(); showToast('Assignment opened')">
-                ${item.status === "completed"
-                    ? "View Submission"
-                    : "Start Assignment"}
-            </button>
 
-        </div>
-    `);
+function submitAssignment(id) {
+
+    const file =
+        document.getElementById(
+            "assignmentFile"
+        );
+
+    if (!file.files.length) {
+
+        showToast(
+            "Please choose a file first."
+        );
+
+        return;
+    }
+
+    if (
+        !state.submittedAssignments.includes(id)
+    ) {
+
+        state.submittedAssignments.push(id);
+    }
+
+    saveState();
+
+    closeModal();
+
+    showToast(
+        "Assignment submitted successfully ✓"
+    );
+
+    renderAssignments();
 }
 
 
@@ -760,10 +1217,21 @@ function openAssignment(id) {
 
 function renderGrades() {
 
-    const average = Math.round(
-        grades.reduce((sum, item) => sum + item.grade, 0) /
-        grades.length
-    );
+    const average =
+        Math.round(
+            grades.reduce(
+                (sum, item) =>
+                    sum + item.grade,
+                0
+            ) / grades.length
+        );
+
+    const highest =
+        Math.max(
+            ...grades.map(
+                item => item.grade
+            )
+        );
 
     pageContent.innerHTML = `
 
@@ -771,19 +1239,56 @@ function renderGrades() {
 
             <div>
                 <h1>Grades</h1>
-                <p>Track your academic performance.</p>
+
+                <p>
+                    Track your academic performance.
+                </p>
             </div>
 
         </div>
 
-        <section class="stats">
+        <div class="grade-summary">
 
-            ${statCard("★", "Overall Average", `${average}%`, "Strong performance")}
-            ${statCard("🏆", "Highest Grade", "95%", "UI/UX Design")}
-            ${statCard("📈", "Improvement", "+4%", "Compared to last month")}
-            ${statCard("✓", "Graded Work", "5", "Assignments")}
+            <div
+                class="grade-summary-item">
 
-        </section>
+                <span>
+                    Overall Average
+                </span>
+
+                <strong>
+                    ${average}%
+                </strong>
+
+            </div>
+
+            <div
+                class="grade-summary-item">
+
+                <span>
+                    Highest Grade
+                </span>
+
+                <strong>
+                    ${highest}%
+                </strong>
+
+            </div>
+
+            <div
+                class="grade-summary-item">
+
+                <span>
+                    Graded Assignments
+                </span>
+
+                <strong>
+                    ${grades.length}
+                </strong>
+
+            </div>
+
+        </div>
 
         <div class="card table-card">
 
@@ -791,7 +1296,10 @@ function renderGrades() {
 
                 <div>
                     <h2>Recent Grades</h2>
-                    <p>Your latest assessed work.</p>
+
+                    <p>
+                        Your latest assessed work.
+                    </p>
                 </div>
 
             </div>
@@ -801,41 +1309,23 @@ function renderGrades() {
                 <table>
 
                     <thead>
+
                         <tr>
                             <th>Course</th>
                             <th>Assignment</th>
                             <th>Grade</th>
                             <th>Feedback</th>
                         </tr>
+
                     </thead>
 
                     <tbody>
 
-                        ${grades.map(item => `
-
-                            <tr>
-
-                                <td>${item.course}</td>
-
-                                <td>${item.assignment}</td>
-
-                                <td>
-                                    <span class="grade ${
-                                        item.grade >= 85
-                                            ? "good"
-                                            : item.grade >= 70
-                                            ? "average"
-                                            : "low"
-                                    }">
-                                        ${item.grade}%
-                                    </span>
-                                </td>
-
-                                <td>${item.feedback}</td>
-
-                            </tr>
-
-                        `).join("")}
+                        ${grades
+                            .map(
+                                gradeRow
+                            )
+                            .join("")}
 
                     </tbody>
 
@@ -844,6 +1334,43 @@ function renderGrades() {
             </div>
 
         </div>
+    `;
+}
+
+
+function gradeRow(item) {
+
+    const className =
+        item.grade >= 85
+            ? "good"
+            : item.grade >= 70
+            ? "average"
+            : "low";
+
+    return `
+
+        <tr>
+
+            <td>
+                ${item.course}
+            </td>
+
+            <td>
+                ${item.assignment}
+            </td>
+
+            <td>
+                <span
+                    class="grade ${className}">
+                    ${item.grade}%
+                </span>
+            </td>
+
+            <td>
+                ${item.feedback}
+            </td>
+
+        </tr>
     `;
 }
 
@@ -860,7 +1387,11 @@ function renderCalendar() {
 
             <div>
                 <h1>Calendar</h1>
-                <p>Keep track of classes, deadlines and events.</p>
+
+                <p>
+                    Keep track of classes,
+                    deadlines and events.
+                </p>
             </div>
 
         </div>
@@ -869,19 +1400,25 @@ function renderCalendar() {
 
             <div class="calendar-header">
 
-                <h2>August 2026</h2>
+                <h2>
+                    August 2026
+                </h2>
 
-                <div class="calendar-controls">
+                <div
+                    class="calendar-controls">
 
-                    <button onclick="showToast('Previous month')">
+                    <button
+                        onclick="showToast('Previous month')">
                         ‹
                     </button>
 
-                    <button onclick="showToast('Today')">
+                    <button
+                        onclick="showToast('Today')">
                         •
                     </button>
 
-                    <button onclick="showToast('Next month')">
+                    <button
+                        onclick="showToast('Next month')">
                         ›
                     </button>
 
@@ -908,9 +1445,11 @@ function calendarMarkup() {
         "Sat"
     ];
 
-    let html = `<div class="calendar-grid">`;
+    let html =
+        `<div class="calendar-grid">`;
 
     days.forEach(day => {
+
         html += `
             <div class="calendar-day-name">
                 ${day}
@@ -918,19 +1457,19 @@ function calendarMarkup() {
         `;
     });
 
-    const firstDay = 6;
-    const totalDays = 31;
-
-    for (let i = 0; i < firstDay; i++) {
+    for (let i = 0; i < 6; i++) {
 
         html += `
-            <div class="calendar-day muted"></div>
+            <div
+                class="calendar-day muted">
+            </div>
         `;
     }
 
-    for (let day = 1; day <= totalDays; day++) {
+    for (let day = 1; day <= 31; day++) {
 
-        const today = day === 23;
+        const today =
+            day === 23;
 
         let event = "";
 
@@ -943,17 +1482,27 @@ function calendarMarkup() {
         }
 
         if (day === 30) {
-            event = "AI Paper";
+            event = "AI Research Paper";
         }
 
         html += `
-            <div class="calendar-day ${today ? "today" : ""}">
 
-                <span>${day}</span>
+            <div
+                class="calendar-day ${today ? "today" : ""}"
+                onclick="calendarDay(${day})">
+
+                <span>
+                    ${day}
+                </span>
 
                 ${
                     event
-                        ? `<div class="calendar-event">${event}</div>`
+                        ? `
+                            <div
+                                class="calendar-event">
+                                ${event}
+                            </div>
+                        `
                         : ""
                 }
 
@@ -964,6 +1513,30 @@ function calendarMarkup() {
     html += `</div>`;
 
     return html;
+}
+
+
+function calendarDay(day) {
+
+    const assignment =
+        assignments.find(
+            item =>
+                item.date ===
+                `Aug ${day}`
+        );
+
+    if (assignment) {
+
+        openAssignment(
+            assignment.id
+        );
+
+    } else {
+
+        showToast(
+            `August ${day}`
+        );
+    }
 }
 
 
@@ -979,38 +1552,62 @@ function renderMessages() {
 
             <div>
                 <h1>Messages</h1>
-                <p>Communicate with your instructors and EduFlow.</p>
+
+                <p>
+                    Communicate with your instructors.
+                </p>
             </div>
 
         </div>
 
         <div class="message-list">
 
-            ${messages.map((message, index) => `
+            ${messages
+                .map(
+                    (message, index) =>
+                        messageCard(
+                            message,
+                            index
+                        )
+                )
+                .join("")}
 
-                <div
-                    class="message-card"
-                    onclick="openMessage(${index})">
+        </div>
+    `;
+}
 
-                    <div class="avatar">
-                        ${message.initials}
-                    </div>
 
-                    <div class="message-info">
+function messageCard(
+    message,
+    index
+) {
 
-                        <h3>${message.name}</h3>
+    return `
 
-                        <p>${message.message}</p>
+        <div
+            class="message-card"
+            onclick="openMessage(${index})">
 
-                    </div>
+            <div class="avatar">
+                ${message.initials}
+            </div>
 
-                    <span class="message-time">
-                        ${message.time}
-                    </span>
+            <div class="message-info">
 
-                </div>
+                <h3>
+                    ${message.name}
+                </h3>
 
-            `).join("")}
+                <p>
+                    ${message.message}
+                </p>
+
+            </div>
+
+            <span
+                class="message-time">
+                ${message.time}
+            </span>
 
         </div>
     `;
@@ -1019,27 +1616,66 @@ function renderMessages() {
 
 function openMessage(index) {
 
-    const message = messages[index];
+    const message =
+        messages[index];
 
     if (!message) return;
 
-    openModal(`
-        <h2>${message.name}</h2>
+    modalContent.innerHTML = `
+
+        <h2>
+            ${message.name}
+        </h2>
 
         <p style="margin-top:15px">
             ${message.message}
         </p>
 
-        <div style="margin-top:25px">
+        <div class="reply-box">
 
-            <button
-                class="primary-button"
-                onclick="closeModal()">
-                Reply
-            </button>
+            <textarea
+                id="replyText"
+                placeholder="Write a reply...">
+            </textarea>
+
+            <div class="reply-actions">
+
+                <button
+                    class="primary-button"
+                    onclick="sendReply()">
+                    Send Reply
+                </button>
+
+            </div>
 
         </div>
-    `);
+    `;
+
+    modalOverlay.classList.add("show");
+}
+
+
+function sendReply() {
+
+    const text =
+        document.getElementById(
+            "replyText"
+        ).value.trim();
+
+    if (!text) {
+
+        showToast(
+            "Write a message first."
+        );
+
+        return;
+    }
+
+    closeModal();
+
+    showToast(
+        "Reply sent successfully ✓"
+    );
 }
 
 
@@ -1055,48 +1691,86 @@ function renderProfile() {
 
             <div>
                 <h1>Profile</h1>
-                <p>Manage your student information.</p>
+
+                <p>
+                    Manage your student information.
+                </p>
             </div>
 
         </div>
 
         <div class="profile-grid">
 
-            <div class="card profile-card">
+            <div
+                class="card profile-card">
 
-                <div class="profile-large">
-                    AB
+                <div
+                    class="profile-avatar-edit">
+
+                    <div
+                        class="profile-large">
+                        AB
+                    </div>
+
+                    <button
+                        class="avatar-edit-button"
+                        onclick="showToast('Avatar upload comes in Phase 3')">
+                        ✎
+                    </button>
+
                 </div>
 
-                <h2>Abdul Basit</h2>
+                <h2>
+                    ${state.user.firstName}
+                    ${state.user.lastName}
+                </h2>
 
-                <p>Student</p>
+                <p>
+                    Student
+                </p>
 
                 <div class="info-list">
 
                     <div class="info-row">
+
                         <span>Email</span>
-                        <strong>student@eduflow.demo</strong>
+
+                        <strong>
+                            ${state.user.email}
+                        </strong>
+
                     </div>
 
                     <div class="info-row">
+
                         <span>Member since</span>
-                        <strong>August 2026</strong>
+
+                        <strong>
+                            August 2026
+                        </strong>
+
                     </div>
 
                     <div class="info-row">
+
                         <span>Courses</span>
-                        <strong>6 active</strong>
+
+                        <strong>
+                            6 active
+                        </strong>
+
                     </div>
 
                 </div>
 
             </div>
 
+            <div
+                class="card form-card">
 
-            <div class="card form-card">
-
-                <h2>Personal Information</h2>
+                <h2>
+                    Personal Information
+                </h2>
 
                 <form id="profileForm">
 
@@ -1104,52 +1778,65 @@ function renderProfile() {
 
                         <div class="form-group">
 
-                            <label>First Name</label>
+                            <label>
+                                First Name
+                            </label>
 
                             <input
-                                type="text"
-                                value="Abdul"
+                                id="firstName"
+                                value="${state.user.firstName}"
                                 required>
 
                         </div>
 
                         <div class="form-group">
 
-                            <label>Last Name</label>
+                            <label>
+                                Last Name
+                            </label>
 
                             <input
-                                type="text"
-                                value="Basit"
+                                id="lastName"
+                                value="${state.user.lastName}"
                                 required>
 
                         </div>
 
                         <div class="form-group">
 
-                            <label>Email</label>
+                            <label>
+                                Email
+                            </label>
 
                             <input
+                                id="email"
                                 type="email"
-                                value="student@eduflow.demo"
+                                value="${state.user.email}"
                                 required>
 
                         </div>
 
                         <div class="form-group">
 
-                            <label>Phone</label>
+                            <label>
+                                Phone
+                            </label>
 
                             <input
-                                type="tel"
-                                value="+92 300 0000000">
+                                id="phone"
+                                value="${state.user.phone}">
 
                         </div>
 
-                        <div class="form-group full">
+                        <div
+                            class="form-group full">
 
-                            <label>Bio</label>
+                            <label>
+                                Bio
+                            </label>
 
-                            <textarea>Student learning technology, business and data.</textarea>
+                            <textarea
+                                id="bio">${state.user.bio}</textarea>
 
                         </div>
 
@@ -1158,8 +1845,8 @@ function renderProfile() {
                     <div class="form-actions">
 
                         <button
-                            type="submit"
-                            class="primary-button">
+                            class="primary-button"
+                            type="submit">
                             Save Changes
                         </button>
 
@@ -1174,12 +1861,74 @@ function renderProfile() {
 
     document
         .getElementById("profileForm")
-        .addEventListener("submit", event => {
+        .addEventListener(
+            "submit",
+            saveProfile
+        );
+}
 
-            event.preventDefault();
 
-            showToast("Profile saved successfully");
-        });
+function saveProfile(event) {
+
+    event.preventDefault();
+
+    state.user.firstName =
+        document.getElementById(
+            "firstName"
+        ).value.trim();
+
+    state.user.lastName =
+        document.getElementById(
+            "lastName"
+        ).value.trim();
+
+    state.user.email =
+        document.getElementById(
+            "email"
+        ).value.trim();
+
+    state.user.phone =
+        document.getElementById(
+            "phone"
+        ).value.trim();
+
+    state.user.bio =
+        document.getElementById(
+            "bio"
+        ).value.trim();
+
+    saveState();
+
+    updateUserUI();
+
+    showToast(
+        "Profile saved successfully ✓"
+    );
+}
+
+
+function updateUserUI() {
+
+    const fullName =
+        `${state.user.firstName} ${state.user.lastName}`;
+
+    const top =
+        document.getElementById(
+            "topUserName"
+        );
+
+    const side =
+        document.getElementById(
+            "sidebarUserName"
+        );
+
+    if (top) {
+        top.textContent = fullName;
+    }
+
+    if (side) {
+        side.textContent = fullName;
+    }
 }
 
 
@@ -1195,14 +1944,19 @@ function renderSettings() {
 
             <div>
                 <h1>Settings</h1>
-                <p>Customize your EduFlow experience.</p>
+
+                <p>
+                    Customize your EduFlow experience.
+                </p>
             </div>
 
         </div>
 
         <div class="card form-card">
 
-            <h2>Preferences</h2>
+            <h2>
+                Preferences
+            </h2>
 
             <div class="settings-list">
 
@@ -1210,30 +1964,34 @@ function renderSettings() {
 
                     <div class="setting-info">
 
-                        <h3>Dark Mode</h3>
+                        <h3>
+                            Dark Mode
+                        </h3>
 
                         <p>
-                            Use a darker appearance across EduFlow.
+                            Use a darker appearance.
                         </p>
 
                     </div>
 
                     <button
                         id="darkToggle"
-                        class="toggle ${appState.darkMode ? "active" : ""}">
+                        class="toggle
+                        ${state.dark ? "active" : ""}">
                     </button>
 
                 </div>
-
 
                 <div class="setting-row">
 
                     <div class="setting-info">
 
-                        <h3>Email Notifications</h3>
+                        <h3>
+                            Email Notifications
+                        </h3>
 
                         <p>
-                            Receive updates about assignments and grades.
+                            Receive learning updates.
                         </p>
 
                     </div>
@@ -1245,15 +2003,16 @@ function renderSettings() {
 
                 </div>
 
-
                 <div class="setting-row">
 
                     <div class="setting-info">
 
-                        <h3>Assignment Reminders</h3>
+                        <h3>
+                            Assignment Reminders
+                        </h3>
 
                         <p>
-                            Get reminders before deadlines.
+                            Get deadline reminders.
                         </p>
 
                     </div>
@@ -1268,52 +2027,67 @@ function renderSettings() {
             </div>
 
         </div>
-
     `;
 
     document
         .getElementById("darkToggle")
-        .addEventListener("click", toggleDarkMode);
+        .addEventListener(
+            "click",
+            toggleDark
+        );
 
     document
         .getElementById("emailToggle")
-        .addEventListener("click", toggleElement);
+        .addEventListener(
+            "click",
+            toggleSetting
+        );
 
     document
         .getElementById("reminderToggle")
-        .addEventListener("click", toggleElement);
+        .addEventListener(
+            "click",
+            toggleSetting
+        );
 }
 
 
-function toggleDarkMode() {
+function toggleDark() {
 
-    appState.darkMode = !appState.darkMode;
+    state.dark =
+        !state.dark;
 
-    document.body.classList.toggle(
-        "dark",
-        appState.darkMode
-    );
+    saveState();
 
-    localStorage.setItem(
-        "eduFlowDark",
-        appState.darkMode
-    );
+    applyTheme();
 
     renderSettings();
 
     showToast(
-        appState.darkMode
+        state.dark
             ? "Dark mode enabled"
             : "Dark mode disabled"
     );
 }
 
 
-function toggleElement(event) {
+function applyTheme() {
 
-    event.currentTarget.classList.toggle("active");
+    document.body.classList.toggle(
+        "dark",
+        state.dark
+    );
+}
 
-    showToast("Setting updated");
+
+function toggleSetting(event) {
+
+    event.currentTarget
+        .classList.toggle("active");
+
+    showToast(
+        "Setting updated"
+    );
 }
 
 
@@ -1323,49 +2097,181 @@ function toggleElement(event) {
 
 function setupSearch() {
 
-    const search = document.getElementById("globalSearch");
-
-    search.addEventListener("input", event => {
-
-        const query = event.target.value
-            .trim()
-            .toLowerCase();
-
-        if (!query) return;
-
-        const foundCourse = courses.find(course =>
-            course.title.toLowerCase().includes(query) ||
-            course.description.toLowerCase().includes(query)
+    const input =
+        document.getElementById(
+            "globalSearch"
         );
 
-        const foundAssignment = assignments.find(item =>
-            item.title.toLowerCase().includes(query) ||
-            item.course.toLowerCase().includes(query)
+    input.addEventListener(
+        "input",
+        event => {
+
+            const query =
+                event.target.value
+                    .trim()
+                    .toLowerCase();
+
+            removeSearchResults();
+
+            if (!query) return;
+
+            const results = [];
+
+            courses.forEach(course => {
+
+                if (
+                    course.title
+                        .toLowerCase()
+                        .includes(query) ||
+                    course.description
+                        .toLowerCase()
+                        .includes(query)
+                ) {
+
+                    results.push({
+                        title: course.title,
+                        type: "Course",
+                        action:
+                            () =>
+                                openCourse(
+                                    course.id
+                                )
+                    });
+                }
+            });
+
+            assignments.forEach(item => {
+
+                if (
+                    item.title
+                        .toLowerCase()
+                        .includes(query) ||
+                    item.course
+                        .toLowerCase()
+                        .includes(query)
+                ) {
+
+                    results.push({
+                        title: item.title,
+                        type: "Assignment",
+                        action:
+                            () =>
+                                openAssignment(
+                                    item.id
+                                )
+                    });
+                }
+            });
+
+            if (!results.length) {
+
+                showSearchResults([
+                    {
+                        title: "No results found",
+                        type: "Try another search",
+                        action: () => {}
+                    }
+                ]);
+
+                return;
+            }
+
+            showSearchResults(
+                results.slice(0, 6)
+            );
+        }
+    );
+
+    document.addEventListener(
+        "keydown",
+        event => {
+
+            if (
+                (event.ctrlKey ||
+                    event.metaKey) &&
+                event.key.toLowerCase() === "k"
+            ) {
+
+                event.preventDefault();
+
+                input.focus();
+            }
+
+            if (
+                event.key === "Escape"
+            ) {
+
+                removeSearchResults();
+
+                input.blur();
+            }
+        }
+    );
+}
+
+
+function showSearchResults(
+    results
+) {
+
+    const box =
+        document.createElement(
+            "div"
         );
 
-        if (foundCourse) {
+    box.id =
+        "searchResults";
 
-            showToast(`Course found: ${foundCourse.title}`);
+    box.className =
+        "search-results";
 
-        } else if (foundAssignment) {
+    results.forEach(result => {
 
-            showToast(`Assignment found: ${foundAssignment.title}`);
+        const item =
+            document.createElement(
+                "div"
+            );
 
-        }
+        item.className =
+            "search-result";
+
+        item.innerHTML = `
+            <strong>
+                ${result.title}
+            </strong>
+
+            <span>
+                ${result.type}
+            </span>
+        `;
+
+        item.addEventListener(
+            "click",
+            () => {
+
+                removeSearchResults();
+
+                result.action();
+            }
+        );
+
+        box.appendChild(item);
     });
 
-    document.addEventListener("keydown", event => {
+    document.body.appendChild(box);
+}
 
-        if (
-            (event.ctrlKey || event.metaKey) &&
-            event.key.toLowerCase() === "k"
-        ) {
 
-            event.preventDefault();
+function removeSearchResults() {
 
-            search.focus();
-        }
-    });
+    const existing =
+        document.getElementById(
+            "searchResults"
+        );
+
+    if (existing) {
+        existing.remove();
+    }
 }
 
 
@@ -1375,69 +2281,78 @@ function setupSearch() {
 
 function showNotifications() {
 
-    openModal(`
+    modalContent.innerHTML = `
 
-        <h2>Notifications</h2>
+        <h2>
+            Notifications
+        </h2>
 
-        <div style="margin-top:20px">
+        <div style="margin-top:15px">
 
-            <div class="message-card">
+            ${state.notifications
+                .map(
+                    notification => `
 
-                <div class="assignment-icon">
-                    📝
-                </div>
+                        <div
+                            class="notification-item">
 
-                <div class="message-info">
+                            <div
+                                class="notification-dot">
+                            </div>
 
-                    <h3>Assignment due tomorrow</h3>
+                            <div>
 
-                    <p>
-                        JavaScript Project needs your attention.
-                    </p>
+                                <strong>
+                                    ${notification.title}
+                                </strong>
 
-                </div>
+                                <p>
+                                    ${notification.text}
+                                </p>
 
-            </div>
+                            </div>
 
-            <div class="message-card" style="margin-top:10px">
-
-                <div class="assignment-icon">
-                    🎉
-                </div>
-
-                <div class="message-info">
-
-                    <h3>Great progress!</h3>
-
-                    <p>
-                        You completed 5 lessons this week.
-                    </p>
-
-                </div>
-
-            </div>
-
-            <div class="message-card" style="margin-top:10px">
-
-                <div class="assignment-icon">
-                    📊
-                </div>
-
-                <div class="message-info">
-
-                    <h3>New grade available</h3>
-
-                    <p>
-                        Your UI/UX Design grade is 95%.
-                    </p>
-
-                </div>
-
-            </div>
+                        </div>
+                    `
+                )
+                .join("")}
 
         </div>
 
-    `);
+        <div style="margin-top:20px">
+
+            <button
+                class="secondary-button"
+                onclick="markNotificationsRead()">
+
+                Mark all as read
+
+            </button>
+
+        </div>
+    `;
+
+    modalOverlay.classList.add(
+        "show"
+    );
+}
+
+
+function markNotificationsRead() {
+
+    state.notifications.forEach(
+        notification => {
+            notification.read = true;
+        }
+    );
+
+    saveState();
+
+    closeModal();
+
+    showToast(
+        "Notifications marked as read"
+    );
 }
 
 
@@ -1447,25 +2362,46 @@ function showNotifications() {
 
 function setupMobileMenu() {
 
-    const menu = document.getElementById("mobileMenu");
-    const sidebar = document.querySelector(".sidebar");
-    const overlay = document.getElementById("mobileOverlay");
+    const menu =
+        document.getElementById(
+            "mobileMenu"
+        );
 
-    menu.addEventListener("click", () => {
+    const sidebar =
+        document.getElementById(
+            "sidebar"
+        );
 
-        sidebar.classList.toggle("open");
-        overlay.classList.toggle("show");
+    const overlay =
+        document.getElementById(
+            "mobileOverlay"
+        );
 
-    });
+    menu.addEventListener(
+        "click",
+        () => {
 
-    overlay.addEventListener("click", closeMobileMenu);
+            sidebar.classList.toggle(
+                "open"
+            );
+
+            overlay.classList.toggle(
+                "show"
+            );
+        }
+    );
+
+    overlay.addEventListener(
+        "click",
+        closeMobileMenu
+    );
 }
 
 
 function closeMobileMenu() {
 
     document
-        .querySelector(".sidebar")
+        .getElementById("sidebar")
         .classList.remove("open");
 
     document
@@ -1475,42 +2411,52 @@ function closeMobileMenu() {
 
 
 /* =========================================
-   MODALS
+   MODAL
 ========================================= */
 
 function setupModal() {
 
     document
         .getElementById("modalClose")
-        .addEventListener("click", closeModal);
+        .addEventListener(
+            "click",
+            closeModal
+        );
 
-    modalOverlay.addEventListener("click", event => {
+    modalOverlay.addEventListener(
+        "click",
+        event => {
 
-        if (event.target === modalOverlay) {
-            closeModal();
+            if (
+                event.target ===
+                modalOverlay
+            ) {
+
+                closeModal();
+            }
         }
-    });
+    );
 
-    document.addEventListener("keydown", event => {
+    document.addEventListener(
+        "keydown",
+        event => {
 
-        if (event.key === "Escape") {
-            closeModal();
+            if (
+                event.key === "Escape"
+            ) {
+
+                closeModal();
+            }
         }
-    });
-}
-
-
-function openModal(content) {
-
-    modalContent.innerHTML = content;
-
-    modalOverlay.classList.add("show");
+    );
 }
 
 
 function closeModal() {
 
-    modalOverlay.classList.remove("show");
+    modalOverlay.classList.remove(
+        "show"
+    );
 }
 
 
@@ -1518,21 +2464,28 @@ function closeModal() {
    TOAST
 ========================================= */
 
-let toastTimer;
-
 function showToast(message) {
 
     clearTimeout(toastTimer);
 
-    toast.textContent = message;
+    toast.textContent =
+        message;
 
-    toast.classList.add("show");
+    toast.classList.add(
+        "show"
+    );
 
-    toastTimer = setTimeout(() => {
+    toastTimer =
+        setTimeout(
+            () => {
 
-        toast.classList.remove("show");
+                toast.classList.remove(
+                    "show"
+                );
 
-    }, 2500);
+            },
+            2500
+        );
 }
 
 
