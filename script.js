@@ -1,3 +1,7 @@
+import { supabase } from "./supabase.js";
+
+console.log("EduFlow Supabase connected:", supabase);
+
 /* =========================================
    EDUFLOW PHASE 2
 ========================================= */
