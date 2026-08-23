@@ -3,214 +3,139 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>EduFlow — Dashboard</title>
+    <meta name="theme-color" content="#4f46e5">
+    <title>EduFlow</title>
     <link rel="stylesheet" href="style.css">
 </head>
 
 <body>
 
+<div id="toast" class="toast"></div>
+
 <div class="app">
 
+    <!-- SIDEBAR -->
     <aside class="sidebar">
-        <div class="logo">
-            <span>Edu</span>Flow
+
+        <div class="brand">
+            <div class="brand-mark">E</div>
+            <span>Edu<span>Flow</span></span>
         </div>
 
-        <nav class="nav">
-            <button class="nav-item active">Dashboard</button>
-            <button class="nav-item">My Courses</button>
-            <button class="nav-item">Assignments</button>
-            <button class="nav-item">Grades</button>
-            <button class="nav-item">Calendar</button>
-            <button class="nav-item">Messages</button>
-        </nav>
+        <div class="sidebar-section">
+            <p class="sidebar-label">MENU</p>
 
-        <div class="sidebar-bottom">
-            <button class="nav-item">Settings</button>
+            <button class="nav-item active" data-page="dashboard">
+                <span>⌂</span>
+                Dashboard
+            </button>
+
+            <button class="nav-item" data-page="courses">
+                <span>▣</span>
+                My Courses
+            </button>
+
+            <button class="nav-item" data-page="assignments">
+                <span>✓</span>
+                Assignments
+                <b class="nav-badge">4</b>
+            </button>
+
+            <button class="nav-item" data-page="grades">
+                <span>▤</span>
+                Grades
+            </button>
+
+            <button class="nav-item" data-page="calendar">
+                <span>□</span>
+                Calendar
+            </button>
+
+            <button class="nav-item" data-page="messages">
+                <span>✉</span>
+                Messages
+                <b class="nav-badge">3</b>
+            </button>
         </div>
+
+        <div class="sidebar-section sidebar-bottom">
+            <p class="sidebar-label">ACCOUNT</p>
+
+            <button class="nav-item" data-page="profile">
+                <span>◯</span>
+                Profile
+            </button>
+
+            <button class="nav-item" data-page="settings">
+                <span>⚙</span>
+                Settings
+            </button>
+        </div>
+
+        <div class="sidebar-user">
+            <div class="avatar small">AB</div>
+            <div>
+                <strong>Abdul Basit</strong>
+                <span>Student</span>
+            </div>
+            <button id="logoutBtn" title="Log out">↪</button>
+        </div>
+
     </aside>
 
+    <!-- MAIN -->
     <main class="main">
 
+        <!-- TOPBAR -->
         <header class="topbar">
 
-            <div>
-                <h1 class="page-title">Good evening, Abdul 👋</h1>
-                <p class="page-subtitle">
-                    Here's what's happening with your learning today.
-                </p>
+            <button class="mobile-menu" id="mobileMenu">☰</button>
+
+            <div class="topbar-title">
+                <div class="breadcrumb">Student Portal / <span id="breadcrumb">Dashboard</span></div>
             </div>
 
-            <div class="profile">
-                <div class="profile-info">
-                    <strong>Abdul Basit</strong>
-                    <span>Student</span>
+            <div class="topbar-actions">
+
+                <div class="search-box">
+                    <span>⌕</span>
+                    <input id="globalSearch" type="text" placeholder="Search anything...">
+                    <kbd>⌘ K</kbd>
                 </div>
 
-                <div class="avatar">AB</div>
-            </div>
+                <button class="icon-button notification-button" id="notificationBtn">
+                    ♧
+                    <i></i>
+                </button>
 
+                <button class="profile-button" data-page="profile">
+                    <div class="avatar">AB</div>
+                    <div class="profile-button-text">
+                        <strong>Abdul Basit</strong>
+                        <span>Student</span>
+                    </div>
+                    <span>⌄</span>
+                </button>
+
+            </div>
         </header>
 
-
-        <section class="stats">
-
-            <div class="stat-card">
-                <span class="stat-label">Active Courses</span>
-                <strong>6</strong>
-                <small>Currently learning</small>
-            </div>
-
-            <div class="stat-card">
-                <span class="stat-label">Completed</span>
-                <strong>24</strong>
-                <small>Lessons completed</small>
-            </div>
-
-            <div class="stat-card">
-                <span class="stat-label">Assignments</span>
-                <strong>8</strong>
-                <small>Need your attention</small>
-            </div>
-
-            <div class="stat-card">
-                <span class="stat-label">Average Grade</span>
-                <strong>87%</strong>
-                <small>Great progress</small>
-            </div>
-
-        </section>
-
-
-        <section class="dashboard-grid">
-
-            <div class="panel courses-panel">
-
-                <div class="panel-header">
-                    <div>
-                        <h2>Continue Learning</h2>
-                        <p>Pick up where you left off.</p>
-                    </div>
-
-                    <button class="text-button">View all</button>
-                </div>
-
-
-                <div class="course">
-
-                    <div class="course-icon">💻</div>
-
-                    <div class="course-content">
-                        <h3>Web Development</h3>
-                        <p>HTML, CSS & JavaScript</p>
-
-                        <div class="progress">
-                            <div class="progress-bar" style="width: 72%;"></div>
-                        </div>
-
-                        <span>72% complete</span>
-                    </div>
-
-                    <button class="continue-button">
-                        Continue
-                    </button>
-
-                </div>
-
-
-                <div class="course">
-
-                    <div class="course-icon">📊</div>
-
-                    <div class="course-content">
-                        <h3>Data Analytics</h3>
-                        <p>Excel, SQL & visualization</p>
-
-                        <div class="progress">
-                            <div class="progress-bar" style="width: 48%;"></div>
-                        </div>
-
-                        <span>48% complete</span>
-                    </div>
-
-                    <button class="continue-button">
-                        Continue
-                    </button>
-
-                </div>
-
-
-                <div class="course">
-
-                    <div class="course-icon">🧠</div>
-
-                    <div class="course-content">
-                        <h3>Artificial Intelligence</h3>
-                        <p>AI fundamentals</p>
-
-                        <div class="progress">
-                            <div class="progress-bar" style="width: 31%;"></div>
-                        </div>
-
-                        <span>31% complete</span>
-                    </div>
-
-                    <button class="continue-button">
-                        Continue
-                    </button>
-
-                </div>
-
-            </div>
-
-
-            <div class="panel assignments-panel">
-
-                <div class="panel-header">
-                    <div>
-                        <h2>Upcoming</h2>
-                        <p>Your next deadlines.</p>
-                    </div>
-
-                    <button class="text-button">View all</button>
-                </div>
-
-
-                <div class="assignment">
-                    <div class="assignment-icon">📝</div>
-
-                    <div>
-                        <h3>JavaScript Project</h3>
-                        <span>Due tomorrow</span>
-                    </div>
-                </div>
-
-
-                <div class="assignment">
-                    <div class="assignment-icon">📐</div>
-
-                    <div>
-                        <h3>Statistics Quiz</h3>
-                        <span>Due in 3 days</span>
-                    </div>
-                </div>
-
-
-                <div class="assignment">
-                    <div class="assignment-icon">📚</div>
-
-                    <div>
-                        <h3>AI Research Paper</h3>
-                        <span>Due next week</span>
-                    </div>
-                </div>
-
-            </div>
-
-        </section>
+        <!-- PAGE CONTENT -->
+        <div id="pageContent"></div>
 
     </main>
 
+</div>
+
+<!-- MOBILE OVERLAY -->
+<div class="mobile-overlay" id="mobileOverlay"></div>
+
+<!-- MODAL -->
+<div class="modal-overlay" id="modalOverlay">
+    <div class="modal" id="modal">
+        <button class="modal-close" id="modalClose">×</button>
+        <div id="modalContent"></div>
+    </div>
 </div>
 
 <script src="script.js"></script>
