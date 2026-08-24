@@ -1,13 +1,15 @@
 import { supabase } from './supabase';
 
 const missing=()=>new Error('Supabase is not configured');
-export const currentSchoolId=async()=>{if(!supabase)return{data:null,error:missing()};const{data:{user},error:authError}=await supabase.auth.getUser();if(authError||!user)return{data:null,error:authError||new Error('You must be signed in.')};return supabase.from('profiles').select('school_id').eq('id',user.id).single();};
-export const listClasses=()=>supabase?supabase.from('classes').select('id,school_id,name,section,room,academic_year_id,created_at').order('name'):Promise.resolve({data:[],error:missing()});
-export const createClass=(school_id:string,name:string,section='A',room?:string,academic_year_id?:string)=>supabase?supabase.from('classes').insert({school_id,name,section,room:room||null,academic_year_id:academic_year_id||null}).select().single():Promise.reject(missing());
-export const updateClass=(id:string,input:{name:string;section:string;room?:string})=>supabase?supabase.from('classes').update({name:input.name,section:input.section,room:input.room||null}).eq('id',id).select().single():Promise.reject(missing());
+export const currentSchoolId=()=>supabase?supabase.rpc('current_school_id').then((r:any)=>({data:{school_id:r.data},error:r.error})):Promise.resolve({data:null,error:missing()});
+export const listClasses=()=>supabase?supabase.from('classes').select('id,name,section,room,academic_year_id,created_at').order('name'):Promise.resolve({data:[],error:missing()});
+export const createClass=(school_id:string,name:string,section='A',room?:string,academic_year_id?:string)=>supabase?supabase.from('classes').insert({school_id,name,section,room,academic_year_id}).select().single():Promise.reject(missing());
+export const updateClass=(id:string,input:{name:string;section:string;room?:string})=>supabase?supabase.from('classes').update(input).eq('id',id).select().single():Promise.reject(missing());
 export const deleteClass=(id:string)=>supabase?supabase.from('classes').delete().eq('id',id):Promise.reject(missing());
 export const listSubjects=()=>supabase?supabase.from('subjects').select('id,name,code,created_at').order('name'):Promise.resolve({data:[],error:missing()});
 export const createSubject=(school_id:string,name:string,code?:string)=>supabase?supabase.from('subjects').insert({school_id,name,code}).select().single():Promise.reject(missing());
+export const updateSubject=(id:string,input:{name:string;code?:string})=>supabase?supabase.from('subjects').update(input).eq('id',id).select().single():Promise.reject(missing());
+export const deleteSubject=(id:string)=>supabase?supabase.from('subjects').delete().eq('id',id):Promise.reject(missing());
 export const listEnrollments=()=>supabase?supabase.from('student_enrollments').select('id,student_id,class_id,roll_number,active,enrolled_at').order('enrolled_at',{ascending:false}):Promise.resolve({data:[],error:missing()});
 export const enrollStudent=(school_id:string,student_id:string,class_id:string,roll_number?:string)=>supabase?supabase.from('student_enrollments').insert({school_id,student_id,class_id,roll_number}).select().single():Promise.reject(missing());
 export const listAttendance=(date:string)=>supabase?supabase.from('attendance').select('id,student_id,class_id,attendance_date,status,note,marked_by').eq('attendance_date',date):Promise.resolve({data:[],error:missing()});
