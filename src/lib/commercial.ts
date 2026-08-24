@@ -1,0 +1,8 @@
+import { supabase } from './supabase';
+
+export async function listPlans(){if(!supabase) return {data:[],error:new Error('Supabase is not configured')}; return supabase.from('plan_catalog').select('*').eq('active',true).order('monthly_price');}
+export async function getSchoolSubscription(schoolId:string){if(!supabase)return{data:null,error:new Error('Supabase is not configured')};return supabase.from('school_subscriptions').select('*,plan_catalog(*)').eq('school_id',schoolId).maybeSingle();}
+export async function getUsage(schoolId:string){if(!supabase)return{data:null,error:new Error('Supabase is not configured')};return supabase.from('usage_snapshots').select('*').eq('school_id',schoolId).order('captured_at',{ascending:false}).limit(1).maybeSingle();}
+export async function getOnboarding(schoolId:string){if(!supabase)return{data:null,error:new Error('Supabase is not configured')};return supabase.from('onboarding_progress').select('*').eq('school_id',schoolId).maybeSingle();}
+export async function saveOnboarding(schoolId:string,steps:string[],completed:boolean){if(!supabase)return{data:null,error:new Error('Supabase is not configured')};return supabase.from('onboarding_progress').upsert({school_id:schoolId,completed_steps:steps,completed,updated_at:new Date().toISOString()}).select().single();}
+export async function recordAudit(input:{school_id?:string|null;action:string;target_type?:string;target_id?:string|null;metadata?:Record<string,unknown>}){if(!supabase)return{error:new Error('Supabase is not configured')};const{data:{user}}=await supabase.auth.getUser();return supabase.from('audit_logs').insert({actor_id:user?.id??null,...input});}
