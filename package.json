@@ -1,23 +1,23 @@
 {
-  "name": "saas",
+  "name": "eduflow",
   "version": "1.0.0",
-  "description": "",
-  "main": "script.js",
+  "private": true,
+  "type": "module",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "dev": "vite --host 0.0.0.0",
+    "build": "vite build",
+    "preview": "vite preview --host 0.0.0.0",
+    "test": "echo \"No automated tests configured yet\""
   },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/basithunyawrr/Saas.git"
-  },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "bugs": {
-    "url": "https://github.com/basithunyawrr/Saas/issues"
-  },
-  "homepage": "https://github.com/basithunyawrr/Saas#readme",
   "dependencies": {
-    "@supabase/supabase-js": "^2.112.3"
+    "@supabase/supabase-js": "^2.112.3",
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8",
+    "lucide-react": "^0.468.0"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^4.4.1",
+    "vite": "^6.1.0",
+    "typescript": "^5.7.2"
   }
 }
