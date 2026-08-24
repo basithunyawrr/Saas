@@ -1,0 +1,20 @@
+import { supabase } from './supabase';
+
+export async function listAdmins() {
+  if (!supabase) return { data: [], error: new Error('Supabase is not configured') };
+  return supabase.from('profiles').select('id,full_name,phone,role,school_id,created_at').eq('role','admin').order('created_at',{ascending:false});
+}
+export async function listSchools() {
+  if (!supabase) return { data: [], error: new Error('Supabase is not configured') };
+  return supabase.from('schools').select('id,name,slug,status,created_at').order('created_at',{ascending:false});
+}
+export async function createSchool(name:string) {
+  if (!supabase) throw new Error('Supabase is not configured');
+  const slugBase=name.toLowerCase().trim().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');
+  return supabase.from('schools').insert({name,slug:slugBase || `school-${crypto.randomUUID().slice(0,8)}`}).select().single();
+}
+export async function createAdmin(input:{full_name:string;email:string;password:string;phone?:string;school_id?:string}) {
+  if (!supabase) throw new Error('Supabase is not configured');
+  const {data,error}=await supabase.functions.invoke('create-admin',{body:input});
+  return {data,error};
+}
