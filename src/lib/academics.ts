@@ -1,5 +1,4 @@
 import { supabase } from './supabase';
-
 const missing=()=>new Error('Supabase is not configured');
 export const currentSchoolId=()=>supabase?supabase.rpc('current_school_id').then((r:any)=>({data:{school_id:r.data},error:r.error})):Promise.resolve({data:null,error:missing()});
 export const listClasses=()=>supabase?supabase.from('classes').select('id,name,section,room,academic_year_id,created_at').order('name'):Promise.resolve({data:[],error:missing()});
@@ -20,3 +19,6 @@ export const unassignTeacher=(id:string)=>supabase?supabase.from('teacher_assign
 export const listAttendance=(date:string)=>supabase?supabase.from('attendance').select('id,student_id,class_id,attendance_date,status,note,marked_by').eq('attendance_date',date):Promise.resolve({data:[],error:missing()});
 export const markAttendance=(row:{school_id:string;student_id:string;class_id:string;attendance_date:string;status:string;marked_by:string;note?:string})=>supabase?supabase.from('attendance').upsert(row,{onConflict:'student_id,attendance_date'}).select().single():Promise.reject(missing());
 export const listTimetable=()=>supabase?supabase.from('timetable_entries').select('id,class_id,subject_id,teacher_id,weekday,start_time,end_time,room').order('weekday').order('start_time'):Promise.resolve({data:[],error:missing()});
+export const createTimetableEntry=(school_id:string,input:{class_id:string;subject_id:string;teacher_id:string;weekday:number;start_time:string;end_time:string;room?:string})=>supabase?supabase.from('timetable_entries').insert({school_id,...input}).select().single():Promise.reject(missing());
+export const updateTimetableEntry=(id:string,input:{class_id:string;subject_id:string;teacher_id:string;weekday:number;start_time:string;end_time:string;room?:string})=>supabase?supabase.from('timetable_entries').update(input).eq('id',id).select().single():Promise.reject(missing());
+export const deleteTimetableEntry=(id:string)=>supabase?supabase.from('timetable_entries').delete().eq('id',id):Promise.reject(missing());
