@@ -2,51 +2,72 @@
 
 ## Scope
 
-Audited the Vite/React/TypeScript application, role routing, academic workflows, Supabase migrations/RLS, Edge Functions, deployment configuration, and CI.
+Audited the Vite/React/TypeScript application, role routing, all role workspaces, academic workflows, Supabase migrations/RLS, commercial controls, deployment configuration, and CI.
 
-## Current architecture
+## Stack confirmed
 
-- Admin: school operations, academic workspace, reports, billing, settings.
-- Teacher: assignments, submissions/grading, exams, announcements, timetable, sign-out.
-- Student: assignments/submissions and results/report cards.
-- Parent: linked children, announcements, exams, results and report cards.
-- Super Admin: platform administration and school/user management.
-- Supabase: tenant-scoped school data, academic tables, commercial tables, RLS hardening and Edge Functions.
+- Vite + React 19 + TypeScript.
+- Supabase Auth/Postgres/RLS.
+- Netlify deployment with SPA fallback.
+- No Prisma/Next.js stack is present; the repository is a client-side Vite application.
 
-## Priority gaps identified
+## Portal coverage
 
-### P0 security / release blockers
+- **Super Admin:** platform and school administration.
+- **Administrator:** people, classes, subjects, enrollment, attendance, academics, reports, billing and settings.
+- **Teacher:** assigned timetable, assigned classes, class attendance, assignments, submissions/grading, exams, announcements and sign-out.
+- **Student:** assignments/submissions, results and report cards.
+- **Parent:** linked students, announcements, exams, results and report cards.
 
-- Production demo accounts must remain disabled unless `VITE_ENABLE_DEMO_ACCOUNTS=true` is explicitly configured.
-- Unknown authenticated roles must be denied rather than routed to an administrative workspace.
-- Supabase RLS must be applied and verified against every sensitive table before production data is used.
-- Service-role keys must only exist in Edge Function/server environments.
+## Gap analysis and implementation
 
-### P1 product completion
+### Security
 
-- Teacher classroom roster and teacher-specific attendance workflows need a dedicated portal surface.
-- Teacher assignment creation should target an assigned class/subject rather than a school-wide default.
-- Teacher grading should use a proper modal/editor rather than browser prompts.
-- Student and parent views should resolve human-readable class/subject/student names wherever IDs are currently displayed.
-- Admin quick actions and navigation controls should either perform their action or be clearly disabled/removed.
-- Exam/result entry needs a complete gradebook workflow and publish lifecycle.
+- Demo accounts are environment gated by `VITE_ENABLE_DEMO_ACCOUNTS`; production `.env.example` defaults this to false.
+- Invalid authenticated roles have an explicit access-denied path instead of falling through to Admin.
+- Supabase RLS provides tenant isolation across school data.
+- Teacher profile visibility is restricted to student profiles in their school.
+- Teacher assignments and submissions are now scoped to classes/assignments the teacher owns or is assigned to.
+- Teacher timetable access is restricted to timetable rows assigned to the authenticated teacher.
+- Student assignment visibility is restricted to published assignments for enrolled classes or school-wide assignments.
+- Sensitive attendance, submission, exam-result and report-card mutations receive server-side audit entries.
 
-### P1 engineering quality
+### Teacher portal
 
-- CI now performs TypeScript strict checking and a production Vite build.
-- Add component/integration tests for authentication, role routing, tenant isolation, assignment submission/grading and attendance.
-- Keep migrations additive and idempotent; verify them on a clean Supabase project.
-- Add observability/audit coverage for sensitive administrative mutations.
+Implemented a dedicated teacher workspace with:
 
-## Implementation completed in this pass
+- Assigned timetable.
+- Assigned class/subject selection when creating assignments.
+- Assignment publishing.
+- Submission review.
+- In-app grading modal with marks and feedback.
+- Teacher-scoped class roster.
+- Attendance by class/date with present, absent and late states.
+- Exam scheduling.
+- Announcement publishing.
+- Sign out.
 
-- Added `typecheck` and `check` scripts to package configuration.
-- CI now uses `npm ci`, npm caching, strict TypeScript checking and the production build.
-- Existing authentication already gates demo access through `VITE_ENABLE_DEMO_ACCOUNTS`.
-- Existing role routing contains an explicit access-denied fallback for invalid roles.
-- Existing academic migrations include classes, subjects, enrollments, teacher assignments, attendance, timetable, assignments, submissions, exams, results, report cards and announcements.
-- Existing security migration hardens tenant and role-based access for these workflows.
+### Assessment workflow
 
-## Release gate
+- Replaced browser `prompt()` exam creation with a proper form.
+- Added result creation with student/subject selectors.
+- Added editable result marks and maximum marks.
+- Human-readable student and subject names are displayed where the underlying IDs were previously exposed.
 
-The repository should be considered production-ready only after a clean CI run passes and a real Supabase project is validated with representative admin, teacher, student and parent accounts plus cross-school access tests.
+### Engineering / CI
+
+- `npm run typecheck` and `npm run check` are available.
+- CI performs dependency installation, strict TypeScript validation and a production Vite build.
+- CI intentionally uses `npm install` because the repository currently does not commit a package-lock file; a lockfile should be committed when dependency reproducibility is formalized.
+
+## Remaining release verification
+
+These cannot be truthfully verified from GitHub source inspection alone:
+
+1. A clean production build completing in CI after the latest commits.
+2. Applying all Supabase migrations to a clean project.
+3. Cross-school RLS tests with real authenticated accounts for every role.
+4. Production Supabase configuration and Edge Function secrets.
+5. Browser-level responsive/accessibility testing on the deployed site.
+
+These are release-validation steps, not missing UI features.
