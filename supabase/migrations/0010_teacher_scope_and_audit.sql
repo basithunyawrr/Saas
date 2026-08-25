@@ -1,9 +1,7 @@
 -- Phase 10: teacher-scoped academic access and immutable audit coverage
 
 drop policy if exists "profiles teacher school read" on public.profiles;
-create policy "profiles teacher students read" on public.profiles for select using (
-  public.is_teacher() and school_id=public.current_school_id() and role='student'
-);
+create policy "profiles teacher students read" on public.profiles for select using (public.is_teacher() and school_id=public.current_school_id() and role='student');
 
 drop policy if exists assignments_read on public.assignments;
 create policy assignments_read on public.assignments for select using (
@@ -40,14 +38,40 @@ create policy submissions_student_update on public.assignment_submissions for up
   or (public.is_teacher() and school_id=public.current_school_id() and exists(select 1 from public.assignments a where a.id=assignment_submissions.assignment_id and a.school_id=assignment_submissions.school_id and (a.created_by=auth.uid() or exists(select 1 from public.teacher_assignments ta where ta.teacher_id=auth.uid() and ta.class_id=a.class_id and ta.school_id=a.school_id))))
 ) with check (public.is_active_super_admin() or school_id=public.current_school_id());
 
--- Timetable: administrators can see/manage the school schedule; teachers can only see their own entries.
+-- Teachers only see timetable entries assigned to them; other school roles retain schedule visibility.
 drop policy if exists timetable_read on public.timetable_entries;
 create policy timetable_read on public.timetable_entries for select using (
   public.is_active_super_admin()
-  or public.is_school_admin() and school_id=public.current_school_id()
-  or public.is_teacher() and school_id=public.current_school_id() and teacher_id=auth.uid()
-  or (public.is_student() or public.is_parent()) and school_id=public.current_school_id()
+  or (public.is_school_admin() and school_id=public.current_school_id())
+  or (public.is_teacher() and school_id=public.current_school_id() and teacher_id=auth.uid())
+  or ((public.is_student() or public.is_parent()) and school_id=public.current_school_id())
 );
+
+-- Teachers only see and write attendance for classes they are assigned to.
+drop policy if exists attendance_read on public.attendance;
+create policy attendance_read on public.attendance for select using (
+  public.is_active_super_admin()
+  or public.can_manage_school(school_id)
+  or (public.is_teacher() and school_id=public.current_school_id() and exists(select 1 from public.teacher_assignments ta where ta.teacher_id=auth.uid() and ta.class_id=attendance.class_id and ta.school_id=attendance.school_id))
+  or student_id=auth.uid()
+  or exists(select 1 from public.parent_student_links l where l.parent_id=auth.uid() and l.student_id=attendance.student_id and l.school_id=attendance.school_id)
+);
+
+drop policy if exists attendance_teacher_insert on public.attendance;
+create policy attendance_teacher_insert on public.attendance for insert with check (
+  (public.is_active_super_admin() or public.is_school_admin() or (public.is_teacher() and exists(select 1 from public.teacher_assignments ta where ta.teacher_id=auth.uid() and ta.class_id=attendance.class_id and ta.school_id=attendance.school_id)))
+  and (public.is_active_super_admin() or school_id=public.current_school_id())
+);
+
+drop policy if exists attendance_staff_update on public.attendance;
+create policy attendance_staff_update on public.attendance for update using (
+  public.is_active_super_admin()
+  or public.can_manage_school(school_id)
+  or (public.is_teacher() and school_id=public.current_school_id() and exists(select 1 from public.teacher_assignments ta where ta.teacher_id=auth.uid() and ta.class_id=attendance.class_id and ta.school_id=attendance.school_id))
+) with check (public.is_active_super_admin() or school_id=public.current_school_id());
+
+drop policy if exists attendance_admin_delete on public.attendance;
+create policy attendance_admin_delete on public.attendance for delete using (public.is_active_super_admin() or (public.is_school_admin() and school_id=public.current_school_id()));
 
 -- Sensitive academic mutations are captured server-side.
 create or replace function public.audit_sensitive_change()
