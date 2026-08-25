@@ -10,8 +10,7 @@ export const DEMO_ACCOUNTS: Record<string,{password:string;role:AppRole;name:str
   'parent@demo.eduflow.test': { email:'parent@demo.eduflow.test', password:'Demo@2026!', role:'parent', name:'Demo Parent', schoolId:'demo-school-001' },
 };
 
-// Temporary public demo mode. Disable later by changing this to the env-gated version.
-export function demoModeEnabled() { return true; }
+export function demoModeEnabled() { return import.meta.env.VITE_ENABLE_DEMO_ACCOUNTS === 'true'; }
 
 export function getDemoAccount(email:string,password:string){
   if(!demoModeEnabled()) return null;
