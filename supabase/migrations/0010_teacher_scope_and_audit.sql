@@ -40,6 +40,15 @@ create policy submissions_student_update on public.assignment_submissions for up
   or (public.is_teacher() and school_id=public.current_school_id() and exists(select 1 from public.assignments a where a.id=assignment_submissions.assignment_id and a.school_id=assignment_submissions.school_id and (a.created_by=auth.uid() or exists(select 1 from public.teacher_assignments ta where ta.teacher_id=auth.uid() and ta.class_id=a.class_id and ta.school_id=a.school_id))))
 ) with check (public.is_active_super_admin() or school_id=public.current_school_id());
 
+-- Timetable: administrators can see/manage the school schedule; teachers can only see their own entries.
+drop policy if exists timetable_read on public.timetable_entries;
+create policy timetable_read on public.timetable_entries for select using (
+  public.is_active_super_admin()
+  or public.is_school_admin() and school_id=public.current_school_id()
+  or public.is_teacher() and school_id=public.current_school_id() and teacher_id=auth.uid()
+  or (public.is_student() or public.is_parent()) and school_id=public.current_school_id()
+);
+
 -- Sensitive academic mutations are captured server-side.
 create or replace function public.audit_sensitive_change()
 returns trigger language plpgsql security definer set search_path=public
