@@ -8,7 +8,7 @@ function requireClient() {
 }
 
 export async function signIn(email: string, password: string) {
-  return { ...(await requireClient().auth.signInWithPassword({ email, password })), demo: null };
+  return requireClient().auth.signInWithPassword({ email, password });
 }
 
 export async function signUp(email: string, password: string, fullName: string) {
