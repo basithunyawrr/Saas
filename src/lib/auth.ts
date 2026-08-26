@@ -34,7 +34,7 @@ export async function getMyProfile() {
 
   const { data, error } = await client
     .from('profiles')
-    .select('id,full_name,phone,role,school_id,created_at,updated_at')
+    .select('id,full_name,role,school_id')
     .eq('id', authData.user.id)
     .maybeSingle();
 
